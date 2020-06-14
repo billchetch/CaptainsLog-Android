@@ -28,7 +28,7 @@
                 android:layout_weight="0.2" />
 
             <ImageButton
-                android:id="@+id/raiseAnchor"
+                android:id="@+id/RAISE_ANCHOR"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:layout_weight="1"
@@ -43,7 +43,7 @@
                 android:layout_weight="0.2" />
 
             <ImageButton
-                android:id="@+id/setAnchor"
+                android:id="@+id/SET_ANCHOR"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:layout_weight="1"
@@ -58,7 +58,7 @@
                 android:layout_weight="0.2" />
 
             <ImageButton
-                android:id="@+id/dutyChange"
+                android:id="@+id/DUTY_CHANGE"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:layout_weight="1"
@@ -73,7 +73,7 @@
                 android:layout_weight="0.2" />
 
             <ImageButton
-                android:id="@+id/comment"
+                android:id="@+id/COMMENT"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:layout_weight="1"

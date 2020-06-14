@@ -7,6 +7,7 @@ import android.view.View;
 
 import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.CrewRepository;
+import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.LiveDataCache;
 import net.chetch.webservices.WebserviceRepository;
@@ -20,6 +21,7 @@ public class MainActivity extends GenericActivity {
     CaptainsLogRepository logRepository = new CaptainsLogRepository();
     CrewRepository crewRepository = new CrewRepository();
     Employees crew = null;
+    LogEntry currentLogEntry = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,9 +75,7 @@ public class MainActivity extends GenericActivity {
     }
 
     public void openLogEntry(View view){
-        boolean newEntry = view.getId() == R.id.addLogEntry;
-
-        DialogFragment dialog = new LogEntryDialogFragment(crew);
+        DialogFragment dialog = new LogEntryDialogFragment(crew, currentLogEntry);
         dialog.show(getSupportFragmentManager(), "LogEntryDialog");
     }
 }
