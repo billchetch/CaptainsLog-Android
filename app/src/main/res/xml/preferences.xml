@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:key="api_base_url"
+        android:selectAllOnFocus="true"
+        android:singleLine="false"
+        android:title="API Base URL"
+        android:summary="Set the API base URL here"
+        android:defaultValue="http://192.168.43.123:8003/api/"/>
+
+</PreferenceScreen>
