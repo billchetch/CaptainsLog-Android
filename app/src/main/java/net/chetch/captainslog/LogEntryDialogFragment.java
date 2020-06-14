@@ -10,16 +10,20 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import net.chetch.utilities.Logger;
+import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
 
 
 public class LogEntryDialogFragment extends AppCompatDialogFragment {
 
     Employees crew = null;
+    Employee crewOnDuty = null;
 
-    public LogEntryDialogFragment(Employees crew){
+    public LogEntryDialogFragment(Employees crew, Employee crewOnDuty){
         this.crew = crew;
-        //this.repository = repository;
+        this.crewOnDuty = crewOnDuty;
+
+        
     }
 
     @Override
