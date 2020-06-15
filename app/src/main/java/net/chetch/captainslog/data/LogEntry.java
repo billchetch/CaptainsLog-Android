@@ -2,7 +2,6 @@ package net.chetch.captainslog.data;
 import net.chetch.webservices.DataObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -49,6 +48,8 @@ public class LogEntry extends DataObject {
         return (Event)getCasted("event");
     }
 
+    public String getEmployeeID(){ return getString("employee_id"); }
+
     public void setEvent(Event event, State defaultState){
         switch(event){
             case SET_ANCHOR:
@@ -66,11 +67,17 @@ public class LogEntry extends DataObject {
         return (State)getCasted("state");
     }
 
+    public void setEmployeeID(String eid){
+        set("employee_id", eid);
+    }
+
     @Override
     public Object getCasted(String fieldName){
         switch(fieldName){
             case "event":
-                return Event.valueOf(getString(fieldName));
+                return containsKey(fieldName) ? Event.valueOf(getString(fieldName)) : null;
+            case "state":
+                return containsKey(fieldName) ? State.valueOf(getString(fieldName)) : null;
             case "created":
                 return getCalendar(fieldName);
             default:

@@ -17,6 +17,7 @@
             android:id="@+id/entryEvents"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:orientation="horizontal"
             android:paddingBottom="4dp"
             android:paddingTop="4dp"
@@ -91,15 +92,16 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@color/age0">
+            android:layout_height="420dp"
+            android:layout_weight="1">
 
             <LinearLayout
                 android:id="@+id/logEntryDialogCrewList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"></LinearLayout>
+                android:layout_margin="4dp"
+                android:orientation="vertical"
+                android:showDividers="middle"></LinearLayout>
         </ScrollView>
 
         <LinearLayout
@@ -109,17 +111,19 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/actionButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <Button
                 android:id="@+id/cancelButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Cancel" />
+
+            <Button
+                android:id="@+id/actionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="OK" />
+
         </LinearLayout>
 
     </LinearLayout>
