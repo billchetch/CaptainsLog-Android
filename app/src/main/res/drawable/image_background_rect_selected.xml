@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <stroke
-        android:width="2dp"
+        android:width="5dp"
         android:color="@color/bluegreen" />
     <padding
-        android:bottom="2dp"
-        android:left="2dp"
-        android:right="2dp"
-        android:top="2dp" />
-    <corners android:radius="2dp" /> <!-- remove line to get sharp corners -->
+        android:bottom="5dp"
+        android:left="5dp"
+        android:right="5dp"
+        android:top="5dp" />
+    <corners android:radius="3dp" /> <!-- remove line to get sharp corners -->
 </shape>

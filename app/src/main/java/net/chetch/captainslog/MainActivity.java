@@ -1,5 +1,7 @@
 package net.chetch.captainslog;
 
+import android.graphics.Bitmap;
+import android.media.Image;
 import android.support.v4.app.DialogFragment;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,13 +17,16 @@ import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends GenericActivity {
     CaptainsLogRepository logRepository = new CaptainsLogRepository();
     CrewRepository crewRepository = new CrewRepository();
     Employees crew = null;
     LogEntry currentLogEntry = null;
+    HashMap<String, Image> crewProfilePics = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,12 +56,18 @@ public class MainActivity extends GenericActivity {
                 crew = c; //keep a record of crew
 
                 String baseURL = crewRepository.getAPIBaseURL() + "/resource/image/profile-pics/";
-                List<String>  imageURLs = new ArrayList<>();
+                HashMap<String, Employee> url2crew = new HashMap<>();
                 for(Employee emp : crew) {
-                    imageURLs.add(baseURL + emp.getKnownAs() + ".jpg");
+                    url2crew.put(baseURL + emp.getKnownAs() + ".jpg", emp);
                 }
-                Utils.downloadImages(imageURLs).observe(this, bms->{
+
+                Utils.downloadImages(url2crew.keySet()).observe(this, bms->{
                     Log.i("Main", "Images downloaded");
+
+                    for(Map.Entry<String, Bitmap> entry : bms.entrySet()){
+                        Employee emp = url2crew.get(entry.getKey());
+                        emp.profileImage = entry.getValue();
+                    }
                     logRepository.getLogEntriesFirstPage().observe(this, entries->{
                         //now prepare UI
 
@@ -75,7 +86,10 @@ public class MainActivity extends GenericActivity {
     }
 
     public void openLogEntry(View view){
-        DialogFragment dialog = new LogEntryDialogFragment(crew, currentLogEntry);
+        LogEntryDialogFragment dialog = new LogEntryDialogFragment();
+        dialog.crew = crew;
+        dialog.currentLogEntry = currentLogEntry;
+
         dialog.show(getSupportFragmentManager(), "LogEntryDialog");
     }
 }
