@@ -17,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -62,8 +63,6 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        // Use the Builder class for convenient dialog construction
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
         // Get the layout inflater
         LayoutInflater inflater = getActivity().getLayoutInflater();
@@ -114,12 +113,7 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
             }
         });
 
-        builder.setView(contentView);
-
-        // Create the Dialog object and return it
-        Dialog dialog = builder.create();
-        dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        Dialog dialog = createDialog();
 
         Log.i("LED", "Dialog created");
 
@@ -161,6 +155,7 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
                     logEntry.setEmployeeID(latestLogEntry == null ? null : latestLogEntry.getEmployeeID());
                     if(event == LogEntry.Event.COMMENT){
                         contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.VISIBLE);
+                        contentView.findViewById(R.id.logEntryComment).requestFocus();
                     } else {
                         contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
                     }
@@ -168,8 +163,9 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
                     break;
             }
 
-
-            ((TextView)contentView.findViewById(R.id.logEntryEventSelected)).setText(event.toString());
+            int resource = getResourceID("log_entry.event." + event.toString(), "string");
+            String eventString = getString(resource);
+            ((TextView)contentView.findViewById(R.id.logEntryEventSelected)).setText(eventString.toUpperCase());
 
             LogEntry.State state = latestLogEntry == null ? LogEntry.State.IDLE : latestLogEntry.getStateForAfterEvent();
             logEntry.setEvent(event, state);

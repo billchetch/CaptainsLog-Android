@@ -43,7 +43,7 @@ public class CrewFragment extends Fragment{
     public void select(boolean selected){
         View view = getView();
 
-        int selectedColour = ContextCompat.getColor(getActivity(), R.color.bluegreen);
+        int selectedColour = ContextCompat.getColor(getActivity(), R.color.bluegreen2);
         view.setBackgroundColor(selected ? selectedColour : Color.TRANSPARENT);
 
         Log.i("CF", "Selected: " + selected + " " + crewMember.getKnownAs());

@@ -6,5 +6,24 @@
     <string name="menus.options_menu.help">Help</string>
 
 
-    <string name="dialog.log_entry.title">Add Entry xx</string>
+    <string name="dialog.log_entry.title">Add Entry</string>
+
+    <string name="button.change">Change</string>
+    <string name="button.ok">OK</string>
+    <string name="button.cancel">Cancel</string>
+    <string name="button.confirm">Confirm</string>
+    <string name="label.field.date">Date:</string>
+    <string name="label.field.status">Status:</string>
+    <string name="label.field.latLon">Lat/Lon:</string>
+
+    <string name="log_entry.event.RAISE_ANCHOR">Raised anchor</string>
+    <string name="log_entry.event.SET_ANCHOR">Set anchor</string>
+    <string name="log_entry.event.DUTY_CHANGE">On duty</string>
+    <string name="log_entry.event.COMMENT">Commented</string>
+
+    <string name="log_entry.state.MOVING">Moving</string>
+    <string name="log_entry.state.IDLE">Idle</string>
+
+
+
 </resources>

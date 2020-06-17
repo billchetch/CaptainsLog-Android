@@ -39,6 +39,11 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
         return true;
     }
 
+
+    protected int getResourceID(String resourceName, String resourceType){
+        return getResources().getIdentifier(resourceName,resourceType, getPackageName());
+    }
+
     public void openSettings(MenuItem menuItem){
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);

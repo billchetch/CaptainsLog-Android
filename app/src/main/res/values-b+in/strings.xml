@@ -1,5 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Log Nahkoda</string>
 
     <string name="dialog.log_entry.title">Tambahkan Data</string>
+
+    <string name="menus.options_menu.help">Bantu</string>
+    <string name="menus.options_menu.about">Soal</string>
+    <string name="menus.options_menu.settings">Settings</string>
+
+    <string name="button.change">Berubah</string>
+    <string name="button.ok">OK</string>
+    <string name="button.cancel">Batal</string>
+    <string name="button.confirm">Betul</string>
+    <string name="label.field.date">Tanggal:</string>
+    <string name="label.field.status">Status:</string>
+    <string name="label.field.latLon">Lat/Lon:</string>
+
+
+    <string name="log_entry.event.RAISE_ANCHOR">Naik jangkar</string>
+    <string name="log_entry.event.SET_ANCHOR">Pasang jangkar</string>
+    <string name="log_entry.event.COMMENT">Keterangan</string>
+    <string name="log_entry.event.DUTY_CHANGE">Sedang bertugas</string>
+
+    <string name="log_entry.state.MOVING">Sedang bergerak</string>
+    <string name="log_entry.state.IDLE">berhenti</string>
 </resources>

@@ -1,14 +1,7 @@
 package net.chetch.captainslog;
 
-import java.util.Calendar;
-
 import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.opengl.Visibility;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatDialogFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,9 +10,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.LogEntry;
-import net.chetch.utilities.Utils;
 import net.chetch.webservices.employees.Employee;
 
 public class LogEntryConfirmationDialogFragment extends GenericDialogFragment{
@@ -30,9 +21,6 @@ public class LogEntryConfirmationDialogFragment extends GenericDialogFragment{
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        // Use the Builder class for convenient dialog construction
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-
         // Get the layout inflater
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
@@ -44,15 +32,14 @@ public class LogEntryConfirmationDialogFragment extends GenericDialogFragment{
 
         iv = contentView.findViewById(R.id.eventIcon);
         String resourceName = "ic_event_" + logEntry.getEvent().toString().toLowerCase() + "_white_24dp";
-        int resource = getResources().getIdentifier(resourceName,"drawable", getContext().getPackageName());
+        int resource = getResourceID(resourceName, "drawable");
         iv.setImageResource(resource);
 
-        TextView tv = contentView.findViewById(R.id.knownAsAndEvent);
-        tv.setText(crewMember.getKnownAs() + " " + logEntry.getEvent().toString());
 
-        tv = contentView.findViewById(R.id.eventDetails);
-        String now = Utils.formatDate(Calendar.getInstance(), "dd/MM/yyyy HH:mm:ss Z");
-        tv.setText("On " + now + " @ 2.3342, -243324 (lat/lon)");
+        resource = getResourceID("log_entry.event." + logEntry.getEvent(), "string");
+        String eventString = getString(resource);
+        TextView tv = contentView.findViewById(R.id.knownAs);
+        tv.setText(crewMember.getKnownAs() + " " + eventString.toLowerCase());
 
         //set the close button
         Button cancelButton = contentView.findViewById(R.id.cancelButton);
@@ -72,10 +59,8 @@ public class LogEntryConfirmationDialogFragment extends GenericDialogFragment{
             }
         });
 
-        builder.setView(contentView);
-
         // Create the Dialog object and return it
-        Dialog dialog = builder.create();
+        Dialog dialog = createDialog();
 
         dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
 

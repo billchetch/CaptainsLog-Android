@@ -13,12 +13,14 @@ import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.employees.Employee;
 
-import java.util.Calendar;
-
 public class LogEntryFragment extends Fragment implements View.OnClickListener {
 
     public LogEntry logEntry;
     public Employee crewMember;
+
+    protected int getResourceID(String resourceName, String resourceType){
+        return getResources().getIdentifier(resourceName,resourceType, getContext().getPackageName());
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -32,17 +34,21 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
 
         iv = contentView.findViewById(R.id.eventIcon);
         String resourceName = "ic_event_" + logEntry.getEvent().toString().toLowerCase() + "_white_24dp";
-        int resource = getResources().getIdentifier(resourceName,"drawable", getContext().getPackageName());
+        int resource = getResourceID(resourceName, "drawable");
         iv.setImageResource(resource);
 
-        TextView tv = contentView.findViewById(R.id.knownAsAndEvent);
-        tv.setText(crewMember.getKnownAs() + " " + logEntry.getEvent().toString());
+        TextView tv = contentView.findViewById(R.id.knownAs);
+        resource = getResourceID("log_entry.event." + logEntry.getEvent(), "string");
+        String eventString = getString(resource);
+        tv.setText(crewMember.getKnownAs() + " " + eventString.toLowerCase());
 
-        tv = contentView.findViewById(R.id.eventDetails);
+        tv = contentView.findViewById(R.id.logEntryDate);
         String dt = Utils.formatDate(logEntry.getCreated(), "dd/MM/yyyy HH:mm:ss Z");
-        String latLon = logEntry.getLatitude() + ", " + logEntry.getLongitude();
-        tv.setText("On " + dt + " @ " + latLon + " (lat/lon)");
+        tv.setText(dt);
 
+        String latLon = logEntry.getLatitude() + ", " + logEntry.getLongitude();
+        tv = contentView.findViewById(R.id.logEntryLatLon);
+        tv.setText(latLon);
 
         contentView.setOnClickListener(this);
 

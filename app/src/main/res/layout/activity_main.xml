@@ -51,7 +51,7 @@
                 android:paddingBottom="16dp"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
-                android:paddingTop="32dp">
+                android:paddingTop="24dp">
 
                 <ImageView
                     android:id="@+id/profilePicCrewOnDuty"
@@ -68,49 +68,97 @@
                 <TextView
                     android:id="@+id/crewOnDutyKnownAs"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="52dp"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="12dp"
                     android:textColor="@color/white"
-                    android:textSize="30sp"
+                    android:textSize="36sp"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/stateAndLocation"
-                    android:layout_width="0dp"
+                    android:id="@+id/lblState"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="8dp"
+                    android:text="@string/label.field.status"
                     android:textColor="@color/white"
-                    android:textSize="18sp"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    android:textSize="16sp"
                     app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
+                    app:layout_constraintTop_toTopOf="@+id/state" />
+
+                <TextView
+                    android:id="@+id/state"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/lblState"
                     app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs" />
 
-                <ImageView
-                    android:id="@+id/progresssOnDuty"
+                <TextView
+                    android:id="@+id/lblLatLon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/label.field.latLon"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
+                    app:layout_constraintTop_toBottomOf="@+id/lblState" />
+
+                <TextView
+                    android:id="@+id/latLon"
                     android:layout_width="0dp"
-                    android:layout_height="24dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/lblLatLon"
+                    app:layout_constraintTop_toBottomOf="@+id/state" />
+
+                <ImageView
+                    android:id="@+id/progressBorder"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
                     android:layout_marginEnd="4dp"
                     android:layout_marginStart="4dp"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="22dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/profilePicCrewOnDuty"
                     app:srcCompat="@drawable/rect_border_only_white" />
 
                 <ImageView
-                    android:id="@+id/imageView2"
+                    android:id="@+id/progressOnDuty"
                     android:layout_width="100dp"
-                    android:layout_height="19dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginTop="14dp"
+                    android:layout_height="33dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginTop="3dp"
                     android:background="@color/age5"
+                    app:layout_constraintStart_toStartOf="@+id/progressBorder"
+                    app:layout_constraintTop_toTopOf="@+id/progressBorder" />
+
+                <TextView
+                    android:id="@+id/progressInfo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="6dp"
+                    android:text="3h 24m / 79%"
+                    android:textAlignment="center"
+                    android:textColor="@color/lightGrey"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:visibility="visible"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/profilePicCrewOnDuty" />
+                    app:layout_constraintTop_toTopOf="@+id/progressBorder" />
 
             </android.support.constraint.ConstraintLayout>
 
@@ -121,7 +169,7 @@
                 android:paddingBottom="8dp"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
-                android:paddingTop="8dp"
+                android:paddingTop="0dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
 
@@ -132,7 +180,7 @@
                     android:onClick="openLogEntry"
                     android:paddingLeft="64dp"
                     android:paddingRight="64dp"
-                    android:text="Change"
+                    android:text="@string/button.change"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"

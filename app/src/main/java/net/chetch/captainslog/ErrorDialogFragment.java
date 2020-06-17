@@ -9,11 +9,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
 
-public class ErrorDialogFragment extends AppCompatDialogFragment implements OnClickListener {
+public class ErrorDialogFragment extends GenericDialogFragment implements OnClickListener {
 
     private int errorType;
     private String errorMessage;
-    private Dialog dialog;
 
     public ErrorDialogFragment(int errorType, String errorMessage){
         this.errorType = errorType;
@@ -35,7 +34,6 @@ public class ErrorDialogFragment extends AppCompatDialogFragment implements OnCl
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
         // Get the layout inflater
         LayoutInflater inflater = getActivity().getLayoutInflater();
@@ -43,17 +41,14 @@ public class ErrorDialogFragment extends AppCompatDialogFragment implements OnCl
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
 
-        View contentView = inflater.inflate(R.layout.error_dialog, null);
+        contentView = inflater.inflate(R.layout.error_dialog, null);
         TextView details = (TextView)contentView.findViewById(R.id.errorDetails);
         details.setText(errorType + ": " + errorMessage);
-
-        builder.setView(contentView)
-                .setTitle(getString(R.string.app_name) + " error!");
 
         contentView.setOnClickListener(this);
 
         // Create the AlertDialog object and return it
-        dialog = builder.create();
+        dialog = createDialog();
 
         return dialog;
     }
@@ -63,9 +58,5 @@ public class ErrorDialogFragment extends AppCompatDialogFragment implements OnCl
         dismiss();
     }
 
-
-    public boolean isShowing(){
-        return dialog != null ? dialog.isShowing() : false;
-    }
 
 }

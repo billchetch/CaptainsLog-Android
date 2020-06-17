@@ -92,12 +92,19 @@ public class MainActivity extends GenericActivity {
                             ImageView iv = findViewById(R.id.profilePicCrewOnDuty);
                             iv.setImageBitmap(emp.profileImage);
 
+                            //known as
                             TextView tv = findViewById(R.id.crewOnDutyKnownAs);
                             tv.setText(emp.getKnownAs());
+
+                            //state
                             LogEntry.State state = latestLogEntry.getStateForAfterEvent();
-                            String latLon = " @ " + "2.33242, -1.55325";
-                            tv = findViewById(R.id.stateAndLocation);
-                            tv.setText(state.toString() + latLon);
+                            int resource = getResourceID("log_entry.state." + state, "string");
+                            tv = findViewById(R.id.state);
+                            tv.setText(getString(resource));
+
+                            tv = findViewById(R.id.latLon);
+                            String latLon = "0.324333, -1234222";
+                            tv.setText(latLon);
                         }
 
                         FragmentManager fragmentManager = getSupportFragmentManager();

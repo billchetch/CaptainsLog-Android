@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/mediumnDarkGrey">
+    android:background="@drawable/dialog_background2">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,15 +23,16 @@
                 android:layout_height="80dp"
                 android:background="@drawable/image_background_rect"
                 android:cropToPadding="true"
-                android:padding="4dp"
+                android:padding="3dp"
                 android:scaleType="fitCenter"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
                 android:id="@+id/eventIcon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/image_background_rect"
                 android:padding="4dp"
                 android:scaleType="fitCenter"
@@ -39,13 +40,12 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/knownAsAndEvent"
+                android:id="@+id/knownAs"
                 android:layout_width="0dp"
                 android:layout_height="33dp"
                 android:layout_marginEnd="8dp"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="2dp"
-                android:text="TextView"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="20dp"
                 android:textColor="@color/white"
                 android:textSize="24sp"
                 android:textStyle="bold"
@@ -53,17 +53,6 @@
                 app:layout_constraintStart_toEndOf="@+id/crewProfileImage"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/eventDetails"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/white"
-                android:textSize="18sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/crewProfileImage"
-                app:layout_constraintTop_toBottomOf="@+id/knownAsAndEvent" />
         </android.support.constraint.ConstraintLayout>
 
         <LinearLayout
@@ -79,7 +68,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_weight="1"
-                android:text="Cancel"
+                android:text="@string/button.cancel"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -95,7 +84,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_weight="1"
-                android:text="CONFIRM"
+                android:text="@string/button.confirm"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
         </LinearLayout>

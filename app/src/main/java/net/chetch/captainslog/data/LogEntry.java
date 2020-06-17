@@ -23,6 +23,7 @@ public class LogEntry extends DataObject {
         switch(state){
             case IDLE:
                 events.add(Event.RAISE_ANCHOR);
+                events.add(Event.DUTY_CHANGE);
                 events.add(Event.COMMENT);
                 break;
 
