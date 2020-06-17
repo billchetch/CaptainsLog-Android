@@ -3,6 +3,8 @@ package net.chetch.captainslog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,17 +30,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class LogEntryDialogFragment extends AppCompatDialogFragment implements View.OnClickListener{
+public class LogEntryDialogFragment extends GenericDialogFragment implements View.OnClickListener{
 
-    View contentView;
     List<View> eventButtons = new ArrayList<>();
     View selectedEventButton = null;
     List<CrewFragment> crewFragments = new ArrayList<>();
 
     public Employees crew = null;
-    public LogEntry currentLogEntry = null;
-    LogEntry logEntry = new LogEntry();
-    Employee selectedCrewMember;
+    public LogEntry latestLogEntry = null;
+    public LogEntry logEntry = new LogEntry();
 
     public LogEntryDialogFragment(){
 
@@ -56,17 +56,6 @@ public class LogEntryDialogFragment extends AppCompatDialogFragment implements V
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-        FragmentManager fragmentManager = getChildFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        Employees activeCrew = crew.active();
-        for(Employee employee : activeCrew){
-            CrewFragment cf = new CrewFragment();
-            cf.crewMember = employee;
-            fragmentTransaction.add(R.id.logEntryDialogCrewList, cf);
-            crewFragments.add(cf);
-        }
-        fragmentTransaction.commit();
-
         Log.i("LED", "View Created");
         return contentView;
     }
@@ -82,8 +71,10 @@ public class LogEntryDialogFragment extends AppCompatDialogFragment implements V
         //get the content view
         contentView = inflater.inflate(R.layout.log_entry_dialog, null);
 
+        //add event buttons
         LogEntry.Event[] allEvents = LogEntry.Event.values();
-        List<LogEntry.Event> possibleEvents = LogEntry.getPossibleEvents(currentLogEntry == null ? LogEntry.State.IDLE : currentLogEntry.getState());
+        LogEntry.State currentState = latestLogEntry == null ? LogEntry.State.IDLE :  latestLogEntry.getStateForAfterEvent();
+        List<LogEntry.Event> possibleEvents = LogEntry.getPossibleEvents(currentState);
         ImageButton btn;
         for(LogEntry.Event event : allEvents){
             btn = contentView.findViewById(getResources().getIdentifier(event.toString(),"id", getContext().getPackageName()));
@@ -98,6 +89,12 @@ public class LogEntryDialogFragment extends AppCompatDialogFragment implements V
             btn.setTag(event);
             eventButtons.add(btn);
         }
+        ((TextView)contentView.findViewById(R.id.logEntryEventSelected)).setText("");
+
+        //hide other sections
+        contentView.findViewById(R.id.logEntryDialogCrewListContainer).setVisibility(View.GONE);
+        contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
+
 
         //set the close button
         Button cancelButton = contentView.findViewById(R.id.cancelButton);
@@ -122,26 +119,65 @@ public class LogEntryDialogFragment extends AppCompatDialogFragment implements V
         // Create the Dialog object and return it
         Dialog dialog = builder.create();
         dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         Log.i("LED", "Dialog created");
 
         return dialog;
     }
 
+    private void populateCrewView(Employees crew){
+        ((ViewGroup)contentView.findViewById(R.id.logEntryDialogCrewList)).removeAllViews();
+
+        FragmentManager fragmentManager = getChildFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        for(Employee employee : crew){
+            CrewFragment cf = new CrewFragment();
+            cf.crewMember = employee;
+            fragmentTransaction.add(R.id.logEntryDialogCrewList, cf);
+            crewFragments.add(cf);
+        }
+        fragmentTransaction.commit();
+    }
 
     @Override
     public void onClick(View view) {
         if(eventButtons.contains(view) && selectedEventButton != view){
             LogEntry.Event event = (LogEntry.Event)view.getTag();
-            logEntry.setEvent(event, currentLogEntry == null ? LogEntry.State.IDLE : currentLogEntry.getState());
+            switch(event){
+                case RAISE_ANCHOR:
+                case DUTY_CHANGE:
+                    if(event == LogEntry.Event.DUTY_CHANGE && latestLogEntry != null) {
+                        populateCrewView(crew.active().exclude("employee_id", latestLogEntry.getEmployeeID()));
+                    } else {
+                        populateCrewView(crew.active());
+                    }
+                    contentView.findViewById(R.id.logEntryDialogCrewListContainer).setVisibility(View.VISIBLE);
+                    contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
+                    logEntry.setEmployeeID(null);
+                    break;
 
-            Log.i("LED", "Handling on click " + event);
+                default:
+                    logEntry.setEmployeeID(latestLogEntry == null ? null : latestLogEntry.getEmployeeID());
+                    if(event == LogEntry.Event.COMMENT){
+                        contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.VISIBLE);
+                    } else {
+                        contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
+                    }
+                    contentView.findViewById(R.id.logEntryDialogCrewListContainer).setVisibility(View.GONE);
+                    break;
+            }
 
+
+            ((TextView)contentView.findViewById(R.id.logEntryEventSelected)).setText(event.toString());
+
+            LogEntry.State state = latestLogEntry == null ? LogEntry.State.IDLE : latestLogEntry.getStateForAfterEvent();
+            logEntry.setEvent(event, state);
             view.setBackgroundResource(R.drawable.image_background_rect_selected);
             if(selectedEventButton != null)selectedEventButton.setBackgroundResource(R.drawable.image_background_rect);
             selectedEventButton = view;
         } else if(view.getTag() instanceof Employee){
-            selectedCrewMember = (Employee)view.getTag();
+            Employee selectedCrewMember = (Employee)view.getTag();
             logEntry.setEmployeeID(selectedCrewMember.getEmployeeID());
             for(CrewFragment cf : crewFragments){
                 cf.select(cf.crewMember.getID() == selectedCrewMember.getID());
@@ -150,27 +186,26 @@ public class LogEntryDialogFragment extends AppCompatDialogFragment implements V
     }
 
 
-    private void showWarningDialog(String message){
-        AlertDialog alertDialog = new AlertDialog.Builder(getActivity()).create();
-        alertDialog.setTitle("Warning");
-        alertDialog.setMessage(message);
-        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        alertDialog.show();
-    }
 
     public void openLogEntryConfirmation(){
         if(logEntry.getEvent() == null || logEntry.getState() == null){
-            showWarningDialog("Please choose an event");
+            dialogManager.showWarningDialog("Please choose an event");
         } else if(logEntry.getEmployeeID() == null){
-            showWarningDialog("Please choose a crew member");
+            dialogManager.showWarningDialog("Please choose a crew member");
         } else {
+            String comment = null;
+            if(logEntry.getEvent() == LogEntry.Event.COMMENT) {
+                TextView tv = contentView.findViewById(R.id.logEntryComment);
+                comment = tv.getText() == null ? null : tv.getText().toString().trim();
+                if (comment == null || comment.length() == 0) {
+                    dialogManager.showWarningDialog("Please add a comment");
+                    return;
+                }
+            }
+            logEntry.setComment(comment);
+
             LogEntryConfirmationDialogFragment dialog = new LogEntryConfirmationDialogFragment();
-            dialog.crewMember = selectedCrewMember;
+            dialog.crewMember = crew.get("employee_id", logEntry.getEmployeeID());
             dialog.logEntry = logEntry;
 
             dialog.show(getChildFragmentManager(), "LogEntryConfirmationDialog");

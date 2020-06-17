@@ -5,12 +5,18 @@ import android.arch.lifecycle.MutableLiveData;
 
 import net.chetch.webservices.LiveDataCache;
 import net.chetch.webservices.WebserviceRepository;
+import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
 
 import java.util.List;
 
 public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogService> {
     static public int ENTRIES_PAGE_SIZE = 250;
+
+    static private CaptainsLogRepository instance = null;
+    static public CaptainsLogRepository getInstance(){
+        return instance == null ? new CaptainsLogRepository() : instance;
+    }
 
     public CaptainsLogRepository(){
         this(LiveDataCache.SHORT_CACHE);
@@ -35,9 +41,19 @@ public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogServ
         LiveDataCache.CacheEntry entry = cache.<LogEntries>getCacheEntry("entries-first-page");
 
         if(entry.refreshValue()) {
-            return getLogEntriesByPage(1, ENTRIES_PAGE_SIZE);
+            service.getEntriesByPage(1, ENTRIES_PAGE_SIZE).enqueue(createCallback(entry));
         }
 
         return entry.liveData;
+    }
+
+    public LiveData<LogEntry> addLogEntry(LogEntry logEntry){
+        final MutableLiveData<LogEntry> liveDataLogEntry = new MutableLiveData<>();
+
+        service.putEntry(logEntry, logEntry.getID()).enqueue(createCallback(liveDataLogEntry));
+
+        cache.setRefreshOnNextCall("entries-first-page");
+
+        return liveDataLogEntry;
     }
 }

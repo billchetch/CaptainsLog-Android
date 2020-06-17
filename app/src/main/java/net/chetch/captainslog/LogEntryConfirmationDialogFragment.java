@@ -3,6 +3,9 @@ package net.chetch.captainslog;
 import java.util.Calendar;
 
 import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatDialogFragment;
@@ -14,17 +17,16 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
-import net.chetch.webservices.Webservice;
 import net.chetch.webservices.employees.Employee;
 
-import java.util.List;
-
-public class LogEntryConfirmationDialogFragment extends AppCompatDialogFragment{
+public class LogEntryConfirmationDialogFragment extends GenericDialogFragment{
 
     public LogEntry logEntry;
     public Employee crewMember;
+
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -35,7 +37,7 @@ public class LogEntryConfirmationDialogFragment extends AppCompatDialogFragment{
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
         //get the content view
-        View contentView = inflater.inflate(R.layout.log_entry_confirmation_dialog, null);
+        contentView = inflater.inflate(R.layout.log_entry_confirmation_dialog, null);
 
         ImageView iv = contentView.findViewById(R.id.crewProfileImage);
         iv.setImageBitmap(crewMember.profileImage);
@@ -45,11 +47,8 @@ public class LogEntryConfirmationDialogFragment extends AppCompatDialogFragment{
         int resource = getResources().getIdentifier(resourceName,"drawable", getContext().getPackageName());
         iv.setImageResource(resource);
 
-        TextView tv = contentView.findViewById(R.id.crewMemberKnownAs);
-        tv.setText(crewMember.getKnownAs());
-
-        tv = contentView.findViewById(R.id.eventName);
-        tv.setText(logEntry.getEvent().toString());
+        TextView tv = contentView.findViewById(R.id.knownAsAndEvent);
+        tv.setText(crewMember.getKnownAs() + " " + logEntry.getEvent().toString());
 
         tv = contentView.findViewById(R.id.eventDetails);
         String now = Utils.formatDate(Calendar.getInstance(), "dd/MM/yyyy HH:mm:ss Z");
@@ -86,6 +85,8 @@ public class LogEntryConfirmationDialogFragment extends AppCompatDialogFragment{
     }
 
     public void saveLogEntry(){
+        dismiss();
 
+        dialogManager.onDialogPositiveClick(this);
     }
 }

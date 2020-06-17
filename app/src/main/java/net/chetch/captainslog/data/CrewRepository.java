@@ -12,6 +12,11 @@ import java.util.List;
 
 public class CrewRepository extends EmployeesRepository{
 
+    static private CrewRepository instance = null;
+    static public CrewRepository getInstance(){
+        return instance == null ? new CrewRepository() : instance;
+    }
+
     final static public int ABK = 1;
 
     public CrewRepository(){

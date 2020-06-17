@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Log Nahkoda</string>
+
+    <string name="dialog.log_entry.title">Tambahkan Data</string>
+</resources>

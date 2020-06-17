@@ -1,8 +1,10 @@
 package net.chetch.captainslog;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -12,7 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
-public class GenericActivity  extends AppCompatActivity {
+public class GenericActivity  extends AppCompatActivity implements IDialogManager{
 
     private ErrorDialogFragment errorDialog;
 
@@ -81,4 +83,26 @@ public class GenericActivity  extends AppCompatActivity {
 
     public void showProgress(){ showProgress(View.VISIBLE);}
     public void hideProgress(){ showProgress(View.INVISIBLE); }
+
+
+    public void showWarningDialog(String warning){
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Warning");
+        alertDialog.setMessage(warning);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+    }
+
+    public void onDialogPositiveClick(GenericDialogFragment dialog){
+
+    }
+
+    public void onDialogNegativeClick(GenericDialogFragment dialog){
+
+    }
 }

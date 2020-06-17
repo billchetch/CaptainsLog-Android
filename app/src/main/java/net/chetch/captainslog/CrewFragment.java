@@ -31,7 +31,7 @@ public class CrewFragment extends Fragment{
         TextView tv = contentView.findViewById(R.id.crewKnownAs);
         tv.setText(crewMember.getKnownAs());
 
-        Log.i("CrewFragment", "Creating fragment view");
+        Log.i("CrewFragment", "Creating fragment view for " + crewMember.getFullName());
 
 
         contentView.setOnClickListener((View.OnClickListener)getParentFragment());

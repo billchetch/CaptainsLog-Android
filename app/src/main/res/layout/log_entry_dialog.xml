@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/darkGrey">
+    android:background="@drawable/dialog_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,6 +12,17 @@
         android:orientation="vertical"
         android:paddingBottom="4dp"
         android:paddingTop="4dp">
+
+        <TextView
+            android:id="@+id/dialogTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:text="@string/dialog.log_entry.title"
+            android:textAlignment="viewStart"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:id="@+id/entryEvents"
@@ -90,10 +101,21 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/logEntryEventSelected"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
         <ScrollView
+            android:id="@+id/logEntryDialogCrewListContainer"
             android:layout_width="match_parent"
             android:layout_height="420dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:visibility="gone">
 
             <LinearLayout
                 android:id="@+id/logEntryDialogCrewList"
@@ -104,11 +126,40 @@
                 android:showDividers="middle"></LinearLayout>
         </ScrollView>
 
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/logEntryCommentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="0.1"
+            android:padding="16dp">
+
+            <EditText
+                android:id="@+id/logEntryComment"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textMultiLine"
+                android:singleLine="false"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </android.support.constraint.ConstraintLayout>
+
         <LinearLayout
             android:id="@+id/buttons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="16dp"
             android:orientation="horizontal">
+
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.1" />
 
             <Button
                 android:id="@+id/cancelButton"
@@ -117,12 +168,22 @@
                 android:layout_weight="1"
                 android:text="Cancel" />
 
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.2" />
+
             <Button
                 android:id="@+id/actionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="OK" />
+
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.1" />
 
         </LinearLayout>
 

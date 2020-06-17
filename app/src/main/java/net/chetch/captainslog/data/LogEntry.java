@@ -36,8 +36,38 @@ public class LogEntry extends DataObject {
         return events;
     }
 
+    static public State getStateForAfterEvent(Event event, State currentState) throws Exception{
+        if(currentState == null)return State.IDLE;
+
+        List<Event> possibleEvents = getPossibleEvents(currentState);
+        if(!possibleEvents.contains(event)){
+            throw new Exception("Event " + event + " cannot occur in state " + currentState);
+        }
+
+        switch(event){
+            case SET_ANCHOR:
+                return State.IDLE;
+
+            case RAISE_ANCHOR:
+                return State.MOVING;
+
+            case COMMENT:
+            case DUTY_CHANGE:
+                return currentState;
+        }
+
+        return null;
+    }
+
     public List<Event> getPossibleEvents(){
         return getPossibleEvents(getState());
+    }
+    public State getStateForAfterEvent(){
+        try {
+            return getStateForAfterEvent(getEvent(), getState());
+        } catch (Exception e){
+            return null;
+        }
     }
 
     public Calendar getCreated(){
@@ -50,12 +80,16 @@ public class LogEntry extends DataObject {
 
     public String getEmployeeID(){ return getString("employee_id"); }
 
+    public Double getLatitude(){ return getDouble("latitude"); }
+
+    public Double getLongitude(){ return getDouble("longitude"); }
+
     public void setEvent(Event event, State defaultState){
         switch(event){
             case SET_ANCHOR:
-                set("state", State.IDLE); break;
-            case RAISE_ANCHOR:
                 set("state", State.MOVING); break;
+            case RAISE_ANCHOR:
+                set("state", State.IDLE); break;
             default:
                 set("state", defaultState); break;
         }
@@ -69,6 +103,10 @@ public class LogEntry extends DataObject {
 
     public void setEmployeeID(String eid){
         set("employee_id", eid);
+    }
+
+    public void setComment(String comment){
+        set("comment", comment);
     }
 
     @Override

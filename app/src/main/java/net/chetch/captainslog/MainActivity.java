@@ -4,13 +4,19 @@ import android.graphics.Bitmap;
 import android.media.Image;
 import android.support.v4.app.DialogFragment;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.CrewRepository;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
+import net.chetch.webservices.DataObjectCollection;
 import net.chetch.webservices.LiveDataCache;
 import net.chetch.webservices.WebserviceRepository;
 import net.chetch.webservices.employees.Employee;
@@ -22,11 +28,13 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends GenericActivity {
-    CaptainsLogRepository logRepository = new CaptainsLogRepository();
-    CrewRepository crewRepository = new CrewRepository();
+    CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
+    CrewRepository crewRepository = CrewRepository.getInstance();
     Employees crew = null;
-    LogEntry currentLogEntry = null;
+    LogEntry latestLogEntry = null;
+    LogEntryDialogFragment logEntryDialog = null;
     HashMap<String, Image> crewProfilePics = new HashMap<>();
+    Employees.FieldMap<String> eidMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +62,12 @@ public class MainActivity extends GenericActivity {
             crewRepository.getCrew().observe(this, c -> {
                 //download profile images
                 crew = c; //keep a record of crew
+                if(c.size() == 0){
+                    showError(0, "No crew");
+                    return;
+                }
+
+                eidMap = crew.employeeIDMap();
 
                 String baseURL = crewRepository.getAPIBaseURL() + "/resource/image/profile-pics/";
                 HashMap<String, Employee> url2crew = new HashMap<>();
@@ -68,9 +82,39 @@ public class MainActivity extends GenericActivity {
                         Employee emp = url2crew.get(entry.getKey());
                         emp.profileImage = entry.getValue();
                     }
-                    logRepository.getLogEntriesFirstPage().observe(this, entries->{
-                        //now prepare UI
 
+                    logRepository.getLogEntriesFirstPage().observe(this, entries->{
+                        //entries.sort("created", DataObjectCollection.SortOptions.DESC);
+
+                        if(entries.size() > 0){
+                            latestLogEntry = entries.get(0);
+                            Employee emp = eidMap.get(entries.get(0).getEmployeeID());
+                            ImageView iv = findViewById(R.id.profilePicCrewOnDuty);
+                            iv.setImageBitmap(emp.profileImage);
+
+                            TextView tv = findViewById(R.id.crewOnDutyKnownAs);
+                            tv.setText(emp.getKnownAs());
+                            LogEntry.State state = latestLogEntry.getStateForAfterEvent();
+                            String latLon = " @ " + "2.33242, -1.55325";
+                            tv = findViewById(R.id.stateAndLocation);
+                            tv.setText(state.toString() + latLon);
+                        }
+
+                        FragmentManager fragmentManager = getSupportFragmentManager();
+                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                        ((ViewGroup)findViewById(R.id.logLinearLayout)).removeAllViews();
+
+                        for(LogEntry entry : entries){
+                            LogEntryFragment lef = new LogEntryFragment();
+                            lef.logEntry = entry;
+                            if(eidMap.containsKey(entry.getEmployeeID())){
+                                lef.crewMember = eidMap.get(entry.getEmployeeID());
+                            }
+                            fragmentTransaction.add(R.id.logLinearLayout, lef);
+                        }
+                        fragmentTransaction.commit();
+
+                        Log.i("Main", "Retreived " + entries.size() + " entries");
                         hideProgress();
                         findViewById(R.id.bodyLinearLayout).setVisibility(View.VISIBLE);
                     });
@@ -86,10 +130,27 @@ public class MainActivity extends GenericActivity {
     }
 
     public void openLogEntry(View view){
-        LogEntryDialogFragment dialog = new LogEntryDialogFragment();
-        dialog.crew = crew;
-        dialog.currentLogEntry = currentLogEntry;
+        if(logEntryDialog != null){
+            logEntryDialog.dismiss();
+        }
+        logEntryDialog = new LogEntryDialogFragment();
+        logEntryDialog.crew = crew;
+        logEntryDialog.latestLogEntry = latestLogEntry;
 
-        dialog.show(getSupportFragmentManager(), "LogEntryDialog");
+        logEntryDialog.show(getSupportFragmentManager(), "LogEntryDialog");
+    }
+
+    @Override
+    public void onDialogPositiveClick(GenericDialogFragment dialog){
+        if(dialog instanceof LogEntryConfirmationDialogFragment){
+            LogEntry logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
+            logEntryDialog.dismiss();
+
+            logRepository.addLogEntry(logEntry).observe(this, le -> {
+                showProgress();
+                logRepository.getLogEntriesFirstPage();
+            });
+        }
+        Log.i("Main", "Saving log entry");
     }
 }
