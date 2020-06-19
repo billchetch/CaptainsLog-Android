@@ -1,11 +1,14 @@
 package net.chetch.captainslog.data;
 import net.chetch.webservices.DataObject;
+import net.chetch.webservices.Webservice;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
 public class LogEntry extends DataObject {
+    static public final String ENTRY_DATE_FORMAT = Webservice.DEFAULT_DATE_FORMAT;
+
     public enum Event{
         RAISE_ANCHOR,
         SET_ANCHOR,

@@ -3,7 +3,9 @@ package net.chetch.captainslog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -20,6 +22,35 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
 
     private boolean includeOptionsMenu = false;
 
+    //timer stuff
+    protected int timerDelay = 30;
+    boolean timerStarted = false;
+    Handler timerHandler = new Handler();
+    Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            onTimer();
+            timerHandler.postDelayed(this, timerDelay*1000);
+        }
+    };
+
+    protected void onTimer(){
+
+    }
+
+    protected void startTimer(int timerDelay){
+        if(timerStarted)return;
+        this.timerDelay = timerDelay;
+        timerHandler.postDelayed(timerRunnable, timerDelay*1000);
+        timerStarted = true;
+    }
+
+    protected void stopTimer(){
+        timerHandler.removeCallbacks(timerRunnable);
+        timerStarted = false;
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,6 +60,7 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
         includeOptionsMenu = true;
         setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -42,6 +74,11 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
 
     protected int getResourceID(String resourceName, String resourceType){
         return getResources().getIdentifier(resourceName,resourceType, getPackageName());
+    }
+
+    protected int getColorResource(String resourceName){
+        int resource = getResourceID(resourceName, "color");
+        return ContextCompat.getColor(getApplicationContext(), resource);
     }
 
     public void openSettings(MenuItem menuItem){

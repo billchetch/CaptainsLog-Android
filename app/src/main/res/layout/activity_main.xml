@@ -122,7 +122,16 @@
                     app:layout_constraintTop_toBottomOf="@+id/state" />
 
                 <ImageView
-                    android:id="@+id/progressBorder"
+                    android:id="@+id/progressOnDutyBar"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:background="@color/age5"
+                    android:visibility="invisible"
+                    app:layout_constraintStart_toStartOf="@+id/progressOnDutyBorder"
+                    app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
+
+                <ImageView
+                    android:id="@+id/progressOnDutyBorder"
                     android:layout_width="0dp"
                     android:layout_height="40dp"
                     android:layout_marginEnd="4dp"
@@ -131,20 +140,10 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/profilePicCrewOnDuty"
-                    app:srcCompat="@drawable/rect_border_only_white" />
-
-                <ImageView
-                    android:id="@+id/progressOnDuty"
-                    android:layout_width="100dp"
-                    android:layout_height="33dp"
-                    android:layout_marginStart="3dp"
-                    android:layout_marginTop="3dp"
-                    android:background="@color/age5"
-                    app:layout_constraintStart_toStartOf="@+id/progressBorder"
-                    app:layout_constraintTop_toTopOf="@+id/progressBorder" />
+                    app:srcCompat="@drawable/rect_border_only_lightgrey" />
 
                 <TextView
-                    android:id="@+id/progressInfo"
+                    android:id="@+id/progressOnDutyInfo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
@@ -155,10 +154,10 @@
                     android:textColor="@color/lightGrey"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:visibility="visible"
+                    android:visibility="invisible"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/progressBorder" />
+                    app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
 
             </android.support.constraint.ConstraintLayout>
 

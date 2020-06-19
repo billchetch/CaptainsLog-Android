@@ -56,4 +56,12 @@ public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogServ
 
         return liveDataLogEntry;
     }
+
+    public LiveData<CrewStats> getCrewStats(){
+        final MutableLiveData<CrewStats> liveDataCrewStats = new MutableLiveData<>();
+
+        service.getCrewStats().enqueue(createCallback(liveDataCrewStats));
+
+        return liveDataCrewStats;
+    }
 }

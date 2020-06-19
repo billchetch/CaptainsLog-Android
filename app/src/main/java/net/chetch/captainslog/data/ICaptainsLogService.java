@@ -25,4 +25,7 @@ public interface ICaptainsLogService {
 
     @DELETE("entry/{id}")
     Call<Integer> deleteEntry(@Path("id") int entryID);
+
+    @GET("crew-stats")
+    Call<CrewStats> getCrewStats();
 }

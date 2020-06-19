@@ -1,11 +1,11 @@
 package net.chetch.captainslog;
 
 import android.graphics.Bitmap;
-import android.media.Image;
-import android.support.v4.app.DialogFragment;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,27 +14,38 @@ import android.widget.TextView;
 
 import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.CrewRepository;
+import net.chetch.captainslog.data.CrewStats;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.DataObjectCollection;
-import net.chetch.webservices.LiveDataCache;
-import net.chetch.webservices.WebserviceRepository;
 import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
+import net.chetch.webservices.gps.GPSPosition;
 
-import java.util.ArrayList;
+import java.time.Duration;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends GenericActivity {
     CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
     CrewRepository crewRepository = CrewRepository.getInstance();
     Employees crew = null;
+    Employee crewOnDuty = null;
     LogEntry latestLogEntry = null;
     LogEntryDialogFragment logEntryDialog = null;
-    HashMap<String, Image> crewProfilePics = new HashMap<>();
     Employees.FieldMap<String> eidMap;
+    CrewStats crewStats = null;
+    GPSPosition latestGPS = null;
+    Calendar startedDuty = null;
+    int onDutytMovingTimeLimit = 60*1; //in seconds
+    int onDutyMoving = 0;
+    boolean showOnDuty = false;
+
+
+    //GPSRepository = GPSRepository.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +53,10 @@ public class MainActivity extends GenericActivity {
         setContentView(R.layout.activity_main);
 
         includeOptionsMenu();
+        startTimer(5);
         showProgress();
+
+
         try {
             //configure log repo
             String apiBaseURL = "http://192.168.43.123:8005/api";
@@ -84,27 +98,9 @@ public class MainActivity extends GenericActivity {
                     }
 
                     logRepository.getLogEntriesFirstPage().observe(this, entries->{
-                        //entries.sort("created", DataObjectCollection.SortOptions.DESC);
-
+                        entries.sort("created", DataObjectCollection.SortOptions.DESC);
                         if(entries.size() > 0){
-                            latestLogEntry = entries.get(0);
-                            Employee emp = eidMap.get(entries.get(0).getEmployeeID());
-                            ImageView iv = findViewById(R.id.profilePicCrewOnDuty);
-                            iv.setImageBitmap(emp.profileImage);
-
-                            //known as
-                            TextView tv = findViewById(R.id.crewOnDutyKnownAs);
-                            tv.setText(emp.getKnownAs());
-
-                            //state
-                            LogEntry.State state = latestLogEntry.getStateForAfterEvent();
-                            int resource = getResourceID("log_entry.state." + state, "string");
-                            tv = findViewById(R.id.state);
-                            tv.setText(getString(resource));
-
-                            tv = findViewById(R.id.latLon);
-                            String latLon = "0.324333, -1234222";
-                            tv.setText(latLon);
+                            setLatestLogEntry(entries.get(0));
                         }
 
                         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -136,6 +132,107 @@ public class MainActivity extends GenericActivity {
         }
     }
 
+    @Override
+    protected void onTimer(){
+
+
+        updateOnDuty(showOnDuty);
+    }
+
+    protected void setLatestLogEntry(LogEntry logEntry){
+        if(latestLogEntry != null && latestLogEntry.getID() == logEntry.getID())return;
+
+        Employee emp = eidMap.get(logEntry.getEmployeeID());
+
+        ImageView iv = findViewById(R.id.profilePicCrewOnDuty);
+        iv.setImageBitmap(emp.profileImage);
+
+        //known as
+        TextView tv = findViewById(R.id.crewOnDutyKnownAs);
+        tv.setText(emp.getKnownAs());
+
+        //state
+        LogEntry.State state = logEntry.getStateForAfterEvent();
+        int resource = getResourceID("log_entry.state." + state, "string");
+        tv = findViewById(R.id.state);
+        tv.setText(getString(resource));
+
+        //position lat/lon
+        tv = findViewById(R.id.latLon);
+        String latLon = "0.324333, -1234222";
+        tv.setText(latLon);
+
+
+        if(latestLogEntry == null || !latestLogEntry.getEmployeeID().equals(logEntry.getEmployeeID())){
+            onDutyMoving = 0;
+        }
+
+        latestLogEntry = logEntry;
+        crewOnDuty = emp;
+
+        updateOnDuty(false);
+        logRepository.getCrewStats().observe(this, stats->{
+            crewStats = stats; //keep a record
+            String eid = latestLogEntry.getEmployeeID();
+            startedDuty = crewStats.getStartedDuty(eid);
+
+            //update on duty
+            updateOnDuty(true);
+        });
+    }
+
+    public void updateOnDuty(boolean show){
+        if(latestLogEntry == null)return;
+
+        showOnDuty = show;
+        ImageView progressBar = findViewById(R.id.progressOnDutyBar);
+        TextView progressInfo = findViewById(R.id.progressOnDutyInfo);
+        if(!show){
+            progressInfo.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.INVISIBLE);
+            return;
+        }
+
+
+        switch(latestLogEntry.getStateForAfterEvent()){
+            case MOVING:
+                Calendar now = Calendar.getInstance();
+                long hours  = Utils.hoursDiff(now, startedDuty);
+                long minutes = Utils.dateDiff(now, startedDuty, TimeUnit.MINUTES) - 60*hours;
+                long secondsTotal = Utils.dateDiff(now, startedDuty, TimeUnit.SECONDS);
+                double dutyCompletion = (double)secondsTotal / (double)onDutytMovingTimeLimit;
+                int percentage = (int)(100*dutyCompletion);
+                int age = Math.min((int)Math.floor(dutyCompletion * 5), 5);
+
+                String s = (hours > 0 ? hours + "h " : "") + minutes + "m";
+                s += " / " + percentage + "%";
+                progressInfo.setText(s);
+                progressInfo.setVisibility(View.VISIBLE);
+
+                //progress bar width
+                ImageView progressBorder = findViewById(R.id.progressOnDutyBorder);
+                int borderWidth = progressBorder.getWidth();
+                progressBar.getLayoutParams().width = (int)(borderWidth*Math.min(dutyCompletion, 1.0));
+
+                //progress bar color
+                try {
+                    progressBar.setBackgroundColor(getColorResource("age" + age));
+                } catch (Exception e){
+                    Log.e("Main", e.getMessage() + " for color " + age);
+                }
+
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.requestLayout();
+
+                break;
+
+            case IDLE:
+                progressBar.setVisibility(View.INVISIBLE);
+                progressInfo.setVisibility(View.INVISIBLE);
+                break;
+        }
+    }
+
     public void openLogEntry(View view){
         if(logEntryDialog != null){
             logEntryDialog.dismiss();
@@ -155,6 +252,7 @@ public class MainActivity extends GenericActivity {
 
             logRepository.addLogEntry(logEntry).observe(this, le -> {
                 showProgress();
+                setLatestLogEntry(logEntry);
                 logRepository.getLogEntriesFirstPage();
             });
         }
