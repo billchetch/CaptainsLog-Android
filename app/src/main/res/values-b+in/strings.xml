@@ -3,6 +3,9 @@
     <string name="app_name">Log Nahkoda</string>
 
     <string name="dialog.log_entry.title">Tambahkan Data</string>
+    <string name="dialog.warning.title">Peringatan</string>
+    <string name="dialog.excess_duty.title">Bertugas Terlalu Lama</string>
+    <string name="dialog.excess_duty.text">Anda telah bertugas terlalu lama. Harap berikan alasan.</string>
 
     <string name="menus.options_menu.help">Bantu</string>
     <string name="menus.options_menu.about">Soal</string>
@@ -15,12 +18,16 @@
     <string name="label.field.date">Tanggal:</string>
     <string name="label.field.status">Status:</string>
     <string name="label.field.latLon">Lat/Lon:</string>
-
+    <string name="label.excess_duty.CREW_ASLEEP">Tidak bisa banugnin kru (karna tidur)</string>
+    <string name="label.excess_duty.CREW_SICK">Tidak bisa banugnin kru (karna sakit)</string>
+    <string name="label.excess_duty.NEAR_DESTINATION">Hampir sampai tujuan</string>
+    <string name="label.excess_duty.OTHER_REASON">Alasan lain</string>
 
     <string name="log_entry.event.RAISE_ANCHOR">Naik jangkar</string>
     <string name="log_entry.event.SET_ANCHOR">Pasang jangkar</string>
     <string name="log_entry.event.COMMENT">Keterangan</string>
     <string name="log_entry.event.DUTY_CHANGE">Sedang bertugas</string>
+    <string name="log_entry.event.ALERT">Peringatan</string>
 
     <string name="log_entry.state.MOVING">Sedang bergerak</string>
     <string name="log_entry.state.IDLE">berhenti</string>

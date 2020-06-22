@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 public class ErrorDialogFragment extends GenericDialogFragment implements OnClickListener {
 
-    private int errorType;
-    private String errorMessage;
+    public int errorType;
+    public String errorMessage;
 
     public ErrorDialogFragment(int errorType, String errorMessage){
         this.errorType = errorType;
@@ -56,6 +56,8 @@ public class ErrorDialogFragment extends GenericDialogFragment implements OnClic
     @Override
     public void onClick(View v){
         dismiss();
+
+        dialogManager.onDialogPositiveClick(this);
     }
 
 

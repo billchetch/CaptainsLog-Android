@@ -3,9 +3,10 @@ package net.chetch.captainslog.data;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 
+import net.chetch.webservices.AboutService;
 import net.chetch.webservices.LiveDataCache;
 import net.chetch.webservices.WebserviceRepository;
-import net.chetch.webservices.employees.Employee;
+import net.chetch.webservices.AboutService;
 import net.chetch.webservices.employees.Employees;
 
 import java.util.List;
@@ -23,6 +24,16 @@ public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogServ
     }
     public CaptainsLogRepository(int defaultCacheTime){
         super(ICaptainsLogService.class, defaultCacheTime);
+    }
+
+    public LiveData<AboutService> getAbout(){
+        LiveDataCache.CacheEntry entry = cache.<Employees>getCacheEntry("about-service");
+
+        if(entry.refreshValue()) {
+            service.getAbout().enqueue(createCallback(entry));
+        }
+
+        return entry.liveData;
     }
 
     public LiveData<LogEntries> getLogEntriesByPage(int pageNumber, int pageSize){

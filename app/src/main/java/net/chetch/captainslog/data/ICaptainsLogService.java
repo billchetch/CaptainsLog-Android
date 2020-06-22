@@ -1,5 +1,6 @@
 package net.chetch.captainslog.data;
 
+import net.chetch.webservices.AboutService;
 import net.chetch.webservices.employees.Employee;
 
 import java.util.HashMap;
@@ -14,6 +15,9 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface ICaptainsLogService {
+    @GET("about")
+    Call<AboutService> getAbout();
+
     @GET("entries")
     Call<LogEntries> getEntries();
 

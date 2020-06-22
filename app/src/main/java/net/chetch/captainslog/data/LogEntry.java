@@ -13,12 +13,20 @@ public class LogEntry extends DataObject {
         RAISE_ANCHOR,
         SET_ANCHOR,
         DUTY_CHANGE,
-        COMMENT
+        COMMENT,
+        ALERT
     }
 
     public enum State{
         IDLE,
         MOVING
+    }
+
+    public enum XSDutyReason{
+        CREW_ASLEEP,
+        CREW_SICK,
+        NEAR_DESTINATION,
+        OTHER_REASON
     }
 
     static public List<Event> getPossibleEvents(State state){
@@ -28,12 +36,14 @@ public class LogEntry extends DataObject {
                 events.add(Event.RAISE_ANCHOR);
                 events.add(Event.DUTY_CHANGE);
                 events.add(Event.COMMENT);
+                events.add(Event.ALERT);
                 break;
 
             case MOVING:
                 events.add(Event.SET_ANCHOR);
                 events.add(Event.DUTY_CHANGE);
                 events.add(Event.COMMENT);
+                events.add(Event.ALERT);
                 break;
 
         }
@@ -57,6 +67,7 @@ public class LogEntry extends DataObject {
 
             case COMMENT:
             case DUTY_CHANGE:
+            case ALERT:
                 return currentState;
         }
 
@@ -71,6 +82,15 @@ public class LogEntry extends DataObject {
             return getStateForAfterEvent(getEvent(), getState());
         } catch (Exception e){
             return null;
+        }
+    }
+
+    public boolean isStateChange(){
+        State state = getState();
+        if(state != null){
+            return state != getStateForAfterEvent();
+        } else {
+            return false;
         }
     }
 

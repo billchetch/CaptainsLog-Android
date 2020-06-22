@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
@@ -40,6 +41,8 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
     public Employees crew = null;
     public LogEntry latestLogEntry = null;
     public LogEntry logEntry = new LogEntry();
+    public List<LogEntry.Event> restrictToEvents = null;
+    public LogEntry.Event selectEventOnOpen = null;
 
     public LogEntryDialogFragment(){
 
@@ -58,6 +61,22 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
         super.onCreateView(inflater, container, savedInstanceState);
 
         Log.i("LED", "View Created");
+
+        if(selectEventOnOpen != null){
+            Runnable runnbale = new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    ImageButton btn = contentView.findViewById(getResourceID(selectEventOnOpen.toString(),"id"));
+                    btn.callOnClick();
+                }
+            };
+
+            Handler handler = new Handler();
+            handler.postDelayed(runnbale, 100);//Message will be delivered in 1 second.
+        }
+
         return contentView;
     }
 
@@ -76,8 +95,11 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
         List<LogEntry.Event> possibleEvents = LogEntry.getPossibleEvents(currentState);
         ImageButton btn;
         for(LogEntry.Event event : allEvents){
+
             btn = contentView.findViewById(getResources().getIdentifier(event.toString(),"id", getContext().getPackageName()));
-            if(possibleEvents.contains(event)){
+            if(btn == null)continue;
+
+            if(possibleEvents.contains(event) && (restrictToEvents == null || restrictToEvents.contains(event))){
                 btn.setEnabled(true);
                 btn.setAlpha(1.0f);
                 btn.setOnClickListener(this);
@@ -185,16 +207,16 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
 
     public void openLogEntryConfirmation(){
         if(logEntry.getEvent() == null || logEntry.getState() == null){
-            dialogManager.showWarningDialog("Please choose an event");
+            dialogManager.showWarningDialog(getString(R.string.dialog_warning_choose_event));
         } else if(logEntry.getEmployeeID() == null){
-            dialogManager.showWarningDialog("Please choose a crew member");
+            dialogManager.showWarningDialog(getString(R.string.dialog_warning_choose_crew));
         } else {
             String comment = null;
             if(logEntry.getEvent() == LogEntry.Event.COMMENT) {
                 TextView tv = contentView.findViewById(R.id.logEntryComment);
                 comment = tv.getText() == null ? null : tv.getText().toString().trim();
                 if (comment == null || comment.length() == 0) {
-                    dialogManager.showWarningDialog("Please add a comment");
+                    dialogManager.showWarningDialog(getString(R.string.dialog_warning_add_comment));
                     return;
                 }
             }

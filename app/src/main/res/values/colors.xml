@@ -19,4 +19,5 @@
     <color name="age3">#9e5307</color>
     <color name="age4">#ce4e04</color>
     <color name="age5">#e40101</color>
+    <color name="errorRed">#e40101</color>
 </resources>

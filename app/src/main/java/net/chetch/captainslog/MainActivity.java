@@ -18,11 +18,14 @@ import net.chetch.captainslog.data.CrewStats;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.DataObjectCollection;
+import net.chetch.webservices.Webservice;
 import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
 import net.chetch.webservices.gps.GPSPosition;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -40,10 +43,12 @@ public class MainActivity extends GenericActivity {
     CrewStats crewStats = null;
     GPSPosition latestGPS = null;
     Calendar startedDuty = null;
-    int onDutytMovingTimeLimit = 60*1; //in seconds
-    int onDutyMoving = 0;
+    Calendar warnOfExcessDuty = null;
+    int excessDutyWarningCount = 0;
     boolean showOnDuty = false;
 
+    int onDutytMovingTimeLimit = 60 * 5; //in seconds
+    ExcessOnDutyDialogFragment excessOnDutyDialog = null;
 
     //GPSRepository = GPSRepository.getInstance();
 
@@ -61,17 +66,31 @@ public class MainActivity extends GenericActivity {
             //configure log repo
             String apiBaseURL = "http://192.168.43.123:8005/api";
             logRepository.setAPIBaseURL(apiBaseURL);
-            logRepository.getError().observe(this, t->{
+            logRepository.getError().observe(this, t -> {
                 showError(t);
             });
 
             //configure employee repo
             apiBaseURL = "http://192.168.43.123:8004/api";
             crewRepository.setAPIBaseURL(apiBaseURL);
-            crewRepository.getError().observe(this, t->{
+            crewRepository.getError().observe(this, t -> {
                 showError(t);
             });
 
+            //we call about so as to at least
+            logRepository.getAbout().observe(this, about->{
+                loadData();
+            });
+
+
+        } catch (Exception e){
+            showError(e);
+        }
+
+    }
+
+    protected void loadData(){
+        try {
             //start data loading sequence
             crewRepository.getCrew().observe(this, c -> {
                 //download profile images
@@ -124,10 +143,8 @@ public class MainActivity extends GenericActivity {
                 });
 
             });
-
-
-
         } catch (Exception e){
+            showError(e);
             Log.e("Main", e.getMessage());
         }
     }
@@ -135,6 +152,15 @@ public class MainActivity extends GenericActivity {
     @Override
     protected void onTimer(){
 
+        if(startedDuty != null && showOnDuty && crewOnDuty != null && warnOfExcessDuty != null && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())) {
+            Calendar now = Calendar.getInstance();
+            if(now.getTimeInMillis() > warnOfExcessDuty.getTimeInMillis()){
+                openExcessOnDuty();
+                excessDutyWarningCount++;
+                double coeff = Math.min(excessDutyWarningCount*0.2, 0.5);
+                warnOfExcessDuty.setTimeInMillis(now.getTimeInMillis() + (long)(coeff*onDutytMovingTimeLimit*1000));
+            }
+        }
 
         updateOnDuty(showOnDuty);
     }
@@ -162,23 +188,39 @@ public class MainActivity extends GenericActivity {
         String latLon = "0.324333, -1234222";
         tv.setText(latLon);
 
-
-        if(latestLogEntry == null || !latestLogEntry.getEmployeeID().equals(logEntry.getEmployeeID())){
-            onDutyMoving = 0;
+        //change of on duty
+        boolean dutyChange = crewOnDuty == null || (crewOnDuty.getID() != emp.getID());
+        if(dutyChange || logEntry.isStateChange()){
+            crewOnDuty = emp;
+            startedDuty = null;
+            excessDutyWarningCount = 0;
+            warnOfExcessDuty = null;
         }
-
         latestLogEntry = logEntry;
-        crewOnDuty = emp;
 
         updateOnDuty(false);
         logRepository.getCrewStats().observe(this, stats->{
             crewStats = stats; //keep a record
             String eid = latestLogEntry.getEmployeeID();
-            startedDuty = crewStats.getStartedDuty(eid);
+            if(startedDuty == null) {
+                startedDuty = crewStats.getStartedDuty(eid);
+                if(latestLogEntry.getStateForAfterEvent() == LogEntry.State.MOVING) {
+                    long millis = startedDuty.getTimeInMillis() + (long)(1.1*onDutytMovingTimeLimit*1000); //10% extra
+                    warnOfExcessDuty = Calendar.getInstance();
+                    warnOfExcessDuty.setTimeInMillis(millis);
+                }
+            }
+
 
             //update on duty
             updateOnDuty(true);
         });
+    }
+
+    private double getDutyCompletion(){
+        Calendar now = logRepository.getServerTime();
+        long secondsTotal = Utils.dateDiff(now, startedDuty, TimeUnit.SECONDS);
+        return (double)secondsTotal / (double)onDutytMovingTimeLimit;
     }
 
     public void updateOnDuty(boolean show){
@@ -196,11 +238,11 @@ public class MainActivity extends GenericActivity {
 
         switch(latestLogEntry.getStateForAfterEvent()){
             case MOVING:
-                Calendar now = Calendar.getInstance();
+                Calendar now = logRepository.getServerTime(); //Calendar.getInstance();
                 long hours  = Utils.hoursDiff(now, startedDuty);
                 long minutes = Utils.dateDiff(now, startedDuty, TimeUnit.MINUTES) - 60*hours;
-                long secondsTotal = Utils.dateDiff(now, startedDuty, TimeUnit.SECONDS);
-                double dutyCompletion = (double)secondsTotal / (double)onDutytMovingTimeLimit;
+                Log.i("Main", "Now: " + Utils.formatDate(now, Webservice.DEFAULT_DATE_FORMAT) + ", Started: " + Utils.formatDate(startedDuty, Webservice.DEFAULT_DATE_FORMAT));
+                double dutyCompletion = getDutyCompletion();
                 int percentage = (int)(100*dutyCompletion);
                 int age = Math.min((int)Math.floor(dutyCompletion * 5), 5);
 
@@ -242,20 +284,43 @@ public class MainActivity extends GenericActivity {
         logEntryDialog.latestLogEntry = latestLogEntry;
 
         logEntryDialog.show(getSupportFragmentManager(), "LogEntryDialog");
+
+    }
+
+    public void openExcessOnDuty(){
+        if(excessOnDutyDialog != null){
+            excessOnDutyDialog.dismiss();
+        }
+        excessOnDutyDialog = new ExcessOnDutyDialogFragment();
+        excessOnDutyDialog.latestLogEntry = latestLogEntry;
+
+        excessOnDutyDialog.show(getSupportFragmentManager(), "ExcessOnDutyDialog");
     }
 
     @Override
     public void onDialogPositiveClick(GenericDialogFragment dialog){
+        LogEntry logEntry = null;
         if(dialog instanceof LogEntryConfirmationDialogFragment){
-            LogEntry logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
+            logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
             logEntryDialog.dismiss();
 
+            Log.i("Main", "Saving log entry");
+        } else if(dialog instanceof ExcessOnDutyDialogFragment){
+            logEntry = ((ExcessOnDutyDialogFragment)dialog).logEntry;
+
+            Log.i("Main", "Saving xs on duty reason");
+        } else if(dialog instanceof ErrorDialogFragment){
+            int errorType = ((ErrorDialogFragment)dialog).errorType;
+            Log.i("Main", "Error of type " + errorType);
+        }
+
+        if(logEntry != null){
             logRepository.addLogEntry(logEntry).observe(this, le -> {
                 showProgress();
-                setLatestLogEntry(logEntry);
+                setLatestLogEntry(le);
                 logRepository.getLogEntriesFirstPage();
             });
         }
-        Log.i("Main", "Saving log entry");
+
     }
 }
