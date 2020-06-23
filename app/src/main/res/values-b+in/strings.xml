@@ -4,8 +4,10 @@
 
     <string name="dialog.log_entry.title">Tambahkan Data</string>
     <string name="dialog.warning.title">Peringatan</string>
+    <string name="dialog.confirmation.title">Konfirmasi</string>
     <string name="dialog.excess_duty.title">Bertugas Terlalu Lama</string>
     <string name="dialog.excess_duty.text">Anda telah bertugas terlalu lama. Harap berikan alasan.</string>
+    <string name="dialog.confirmation.markforrevision_text">Mau kasih tanda untuk revisi nanti?</string>
 
     <string name="menus.options_menu.help">Bantu</string>
     <string name="menus.options_menu.about">Soal</string>

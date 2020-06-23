@@ -3,8 +3,10 @@
 
     <string name="dialog.log_entry.title">Add Entry</string>
     <string name="dialog.warning.title">Warning</string>
+    <string name="dialog.confirmation.title">Confirm</string>
     <string name="dialog.excess_duty.title">On Duty For Too Long</string>
     <string name="dialog.excess_duty.text">You have been on duty for longer than allowed.  Please give a reason for this.</string>
+    <string name="dialog.confirmation.markforrevision_text">Mark this for revision?</string>
 
     <string name="dialog.warning.choose_crew">Please choose a crew member</string>
     <string name="dialog.warning.choose_event">Please choose an event</string>

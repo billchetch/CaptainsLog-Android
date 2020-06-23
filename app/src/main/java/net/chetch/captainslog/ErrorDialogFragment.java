@@ -13,6 +13,7 @@ public class ErrorDialogFragment extends GenericDialogFragment implements OnClic
 
     public int errorType;
     public String errorMessage;
+    public Throwable throwable = null;
 
     public ErrorDialogFragment(int errorType, String errorMessage){
         this.errorType = errorType;

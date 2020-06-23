@@ -125,6 +125,14 @@ public class LogEntry extends DataObject {
         return (State)getCasted("state");
     }
 
+    public boolean requiresRevision(){
+        return getInteger("requires_revision") == 1;
+    }
+
+    public void setRequiresRevision(boolean mark){
+        set("requires_revision", mark ? 1 : 0);
+    }
+
     public void setEmployeeID(String eid){
         set("employee_id", eid);
     }

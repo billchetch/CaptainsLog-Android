@@ -8,6 +8,7 @@ import net.chetch.webservices.LiveDataCache;
 import net.chetch.webservices.WebserviceRepository;
 import net.chetch.webservices.AboutService;
 import net.chetch.webservices.employees.Employees;
+import net.chetch.webservices.employees.EmployeesRepository;
 
 import java.util.List;
 
@@ -16,7 +17,8 @@ public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogServ
 
     static private CaptainsLogRepository instance = null;
     static public CaptainsLogRepository getInstance(){
-        return instance == null ? new CaptainsLogRepository() : instance;
+        if(instance == null)instance = new CaptainsLogRepository();
+        return instance;
     }
 
     public CaptainsLogRepository(){
@@ -58,7 +60,7 @@ public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogServ
         return entry.liveData;
     }
 
-    public LiveData<LogEntry> addLogEntry(LogEntry logEntry){
+    public LiveData<LogEntry> saveLogEntry(LogEntry logEntry){
         final MutableLiveData<LogEntry> liveDataLogEntry = new MutableLiveData<>();
 
         service.putEntry(logEntry, logEntry.getID()).enqueue(createCallback(liveDataLogEntry));

@@ -19,8 +19,10 @@ import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.DataObjectCollection;
 import net.chetch.webservices.Webservice;
+import net.chetch.webservices.WebserviceRepository;
 import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
+import net.chetch.webservices.exceptions.WebserviceException;
 import net.chetch.webservices.gps.GPSPosition;
 
 import java.time.Duration;
@@ -91,6 +93,8 @@ public class MainActivity extends GenericActivity {
 
     protected void loadData(){
         try {
+            showProgress();
+
             //start data loading sequence
             crewRepository.getCrew().observe(this, c -> {
                 //download profile images
@@ -310,12 +314,15 @@ public class MainActivity extends GenericActivity {
 
             Log.i("Main", "Saving xs on duty reason");
         } else if(dialog instanceof ErrorDialogFragment){
-            int errorType = ((ErrorDialogFragment)dialog).errorType;
-            Log.i("Main", "Error of type " + errorType);
+            Throwable t = ((ErrorDialogFragment)dialog).throwable;
+            if(t instanceof WebserviceException && !((WebserviceException)t).isServiceAvailable()){
+                loadData();
+            }
+            Log.i("Main", "Error");
         }
 
         if(logEntry != null){
-            logRepository.addLogEntry(logEntry).observe(this, le -> {
+            logRepository.saveLogEntry(logEntry).observe(this, le -> {
                 showProgress();
                 setLatestLogEntry(le);
                 logRepository.getLogEntriesFirstPage();

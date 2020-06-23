@@ -16,6 +16,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import net.chetch.webservices.exceptions.WebserviceException;
+
 public class GenericActivity  extends AppCompatActivity implements IDialogManager{
 
     private ErrorDialogFragment errorDialog;
@@ -106,7 +108,12 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
     }
 
     public void showError(Throwable t){
-        showError(0, t.getMessage());
+        if(t instanceof WebserviceException){
+            showError(((WebserviceException)t).getErrorCode(), t.getMessage());
+        } else {
+            showError(0, t.getMessage());
+        }
+        errorDialog.throwable = t;
     }
     public boolean isErrorShowing(){
         return errorDialog == null ? false : errorDialog.isShowing();
@@ -129,10 +136,27 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
 
     public void showWarningDialog(String warning){
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.setTitle("Warning");
+        alertDialog.setTitle(getString(R.string.dialog_warning_title));
         alertDialog.setMessage(warning);
-        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.button_ok),
                 new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+    }
+
+    public void showConfirmationDialog(String message, DialogInterface.OnClickListener okListener){
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle(getString(R.string.dialog_confirmation_title));
+        alertDialog.setMessage(message);
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.button_ok), okListener);
+
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.button_cancel),
+                new DialogInterface.OnClickListener() {
+                    @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
