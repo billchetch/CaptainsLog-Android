@@ -1,5 +1,9 @@
 package net.chetch.captainslog;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -24,6 +28,8 @@ import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
 import net.chetch.webservices.exceptions.WebserviceException;
 import net.chetch.webservices.gps.GPSPosition;
+import net.chetch.webservices.network.NetworkRepository;
+import net.chetch.webservices.network.Service;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -35,6 +41,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends GenericActivity {
+    static public final String CAPTAINS_LOG_SERVICE_NAME = "Captains Log";
+    static public final String EMPLOYEES_SERVICE_NAME = "Employees";
+
     CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
     CrewRepository crewRepository = CrewRepository.getInstance();
     Employees crew = null;
@@ -48,6 +57,7 @@ public class MainActivity extends GenericActivity {
     Calendar warnOfExcessDuty = null;
     int excessDutyWarningCount = 0;
     boolean showOnDuty = false;
+    boolean canLoadData = false;
 
     int onDutytMovingTimeLimit = 60 * 5; //in seconds
     ExcessOnDutyDialogFragment excessOnDutyDialog = null;
@@ -60,38 +70,67 @@ public class MainActivity extends GenericActivity {
         setContentView(R.layout.activity_main);
 
         includeOptionsMenu();
-        startTimer(5);
+        startTimer(10);
         showProgress();
 
+        if(!canLoadData){
+            configureServices();
+        }
+    }
 
+    protected void configureServices(){
         try {
             //configure log repo
-            String apiBaseURL = "http://192.168.43.123:8005/api";
-            logRepository.setAPIBaseURL(apiBaseURL);
-            logRepository.getError().observe(this, t -> {
+
+            String apiBaseURL = "http://192.168.43.123:8002/api";
+            NetworkRepository networkRepository = NetworkRepository.getInstance();
+            networkRepository.setAPIBaseURL(apiBaseURL);
+            networkRepository.getError().observe(this, t->{
                 showError(t);
             });
 
-            //configure employee repo
-            apiBaseURL = "http://192.168.43.123:8004/api";
-            crewRepository.setAPIBaseURL(apiBaseURL);
-            crewRepository.getError().observe(this, t -> {
-                showError(t);
-            });
+            networkRepository.getServices().observe(this, services ->{
+                try {
+                    Service service = services.getService(CAPTAINS_LOG_SERVICE_NAME);
+                    if (service != null) {
+                        logRepository.setAPIBaseURL(service.getLocalEndpoint());
+                        logRepository.synchronise(networkRepository);
+                        logRepository.getError().observe(this, t -> {
+                            showError(t);
+                        });
+                    } else {
+                        throw new Exception("Could not find service " + CAPTAINS_LOG_SERVICE_NAME);
+                    }
 
-            //we call about so as to at least
-            logRepository.getAbout().observe(this, about->{
-                loadData();
-            });
+                    //configure employee repo
+                    service = services.getService(EMPLOYEES_SERVICE_NAME);
+                    if(service != null) {
+                        crewRepository.setAPIBaseURL(service.getLocalEndpoint());
+                        crewRepository.synchronise(networkRepository);
+                        crewRepository.getError().observe(this, t -> {
+                            showError(t);
+                        });
+                    } else {
+                        throw new Exception("Could not find service " + EMPLOYEES_SERVICE_NAME);
+                    }
+                    canLoadData = true;
+                    loadData();
 
+                    Log.i("Main", "Services loaded");
+                } catch (Exception e){
+                    showError(e);
+                }
+
+            });
 
         } catch (Exception e){
             showError(e);
         }
-
     }
 
     protected void loadData(){
+        if(!canLoadData)return;
+
         try {
             showProgress();
 
@@ -109,7 +148,7 @@ public class MainActivity extends GenericActivity {
                 String baseURL = crewRepository.getAPIBaseURL() + "/resource/image/profile-pics/";
                 HashMap<String, Employee> url2crew = new HashMap<>();
                 for(Employee emp : crew) {
-                    url2crew.put(baseURL + emp.getKnownAs() + ".jpg", emp);
+                    url2crew.put(baseURL + emp.getKnownAs().replace(' ', '_') + ".jpg", emp);
                 }
 
                 Utils.downloadImages(url2crew.keySet()).observe(this, bms->{
@@ -209,9 +248,21 @@ public class MainActivity extends GenericActivity {
             if(startedDuty == null) {
                 startedDuty = crewStats.getStartedDuty(eid);
                 if(latestLogEntry.getStateForAfterEvent() == LogEntry.State.MOVING) {
+
+                    //set the time for the excess duty wakeup
                     long millis = startedDuty.getTimeInMillis() + (long)(1.1*onDutytMovingTimeLimit*1000); //10% extra
                     warnOfExcessDuty = Calendar.getInstance();
                     warnOfExcessDuty.setTimeInMillis(millis);
+
+                    //create an app wakeup
+                    Context ctx = getApplicationContext();
+                    Intent intent = new Intent(ctx, MainActivity.class);
+                    intent.putExtra("wakeup", true);
+                    PendingIntent pi = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+                    mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
+                    mgr.set(AlarmManager.RTC_WAKEUP, warnOfExcessDuty.getTimeInMillis(), pi);
+
                 }
             }
 
