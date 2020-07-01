@@ -23,6 +23,8 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import net.chetch.captainslog.data.Crew;
+import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Logger;
 import net.chetch.webservices.employees.Employee;
@@ -38,7 +40,7 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
     View selectedEventButton = null;
     List<CrewFragment> crewFragments = new ArrayList<>();
 
-    public Employees crew = null;
+    public Crew crew = null;
     public LogEntry latestLogEntry = null;
     public LogEntry logEntry = new LogEntry();
     public List<LogEntry.Event> restrictToEvents = null;
@@ -142,14 +144,14 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
         return dialog;
     }
 
-    private void populateCrewView(Employees crew){
+    private void populateCrewView(Crew crew){
         ((ViewGroup)contentView.findViewById(R.id.logEntryDialogCrewList)).removeAllViews();
 
         FragmentManager fragmentManager = getChildFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        for(Employee employee : crew){
+        for(CrewMember cm : crew){
             CrewFragment cf = new CrewFragment();
-            cf.crewMember = employee;
+            cf.crewMember = cm;
             fragmentTransaction.add(R.id.logEntryDialogCrewList, cf);
             crewFragments.add(cf);
         }
@@ -164,7 +166,8 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
                 case RAISE_ANCHOR:
                 case DUTY_CHANGE:
                     if(event == LogEntry.Event.DUTY_CHANGE && latestLogEntry != null) {
-                        populateCrewView(crew.active().exclude("employee_id", latestLogEntry.getEmployeeID()));
+
+                        populateCrewView(crew.<Crew>active().exclude("employee_id", latestLogEntry.getEmployeeID()));
                     } else {
                         populateCrewView(crew.active());
                     }

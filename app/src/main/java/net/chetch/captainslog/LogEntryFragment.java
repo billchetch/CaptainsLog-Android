@@ -86,13 +86,13 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
     }
 
     private void markForRevision(){
-        CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
+        /*CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
         logEntry.setRequiresRevision(!logEntry.requiresRevision());
         logRepository.saveLogEntry(logEntry).observe(getActivity(), entry->{
             ((TextView)getView().findViewById(R.id.knownAs)).setText(getKnownAsAndEvent());
             logEntry.read(entry);
             Log.i("LEF", "Marked entry ");
-        });
+        });*/
     }
 
     @Override

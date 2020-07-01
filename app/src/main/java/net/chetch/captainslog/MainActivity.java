@@ -2,24 +2,32 @@ package net.chetch.captainslog;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.MainThread;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.chetch.captainslog.data.CaptainsLogRepository;
+import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.CrewRepository;
 import net.chetch.captainslog.data.CrewStats;
 import net.chetch.captainslog.data.LogEntry;
+import net.chetch.captainslog.models.MainViewModel;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.DataObjectCollection;
 import net.chetch.webservices.Webservice;
@@ -30,6 +38,7 @@ import net.chetch.webservices.exceptions.WebserviceException;
 import net.chetch.webservices.gps.GPSPosition;
 import net.chetch.webservices.network.NetworkRepository;
 import net.chetch.webservices.network.Service;
+import net.chetch.webservices.network.Services;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -41,25 +50,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends GenericActivity {
-    static public final String CAPTAINS_LOG_SERVICE_NAME = "Captains Log";
-    static public final String EMPLOYEES_SERVICE_NAME = "Employees";
-
-    CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
-    CrewRepository crewRepository = CrewRepository.getInstance();
-    Employees crew = null;
-    Employee crewOnDuty = null;
-    LogEntry latestLogEntry = null;
+    MainViewModel model;
     LogEntryDialogFragment logEntryDialog = null;
-    Employees.FieldMap<String> eidMap;
-    CrewStats crewStats = null;
-    GPSPosition latestGPS = null;
-    Calendar startedDuty = null;
-    Calendar warnOfExcessDuty = null;
-    int excessDutyWarningCount = 0;
-    boolean showOnDuty = false;
-    boolean canLoadData = false;
 
-    int onDutytMovingTimeLimit = 60 * 5; //in seconds
+    GPSPosition latestGPS = null;
+
+    boolean showOnDuty = false;
+
     ExcessOnDutyDialogFragment excessOnDutyDialog = null;
 
     //GPSRepository = GPSRepository.getInstance();
@@ -69,133 +66,100 @@ public class MainActivity extends GenericActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        /*this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN |
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);*/
+
+        //this should be moved to application or in preferences or something
+        try {
+            String apiBaseURL = "http://192.168.43.123:8002/api/";
+            NetworkRepository.getInstance().setAPIBaseURL(apiBaseURL);
+        } catch (Exception e) {
+            Log.e("MVM", e.getMessage());
+            return;
+        }
+
+
         includeOptionsMenu();
-        startTimer(10);
+        //startTimer(10);
         showProgress();
 
-        if(!canLoadData){
-            configureServices();
-        }
+        model = ViewModelProviders.of(this).get(MainViewModel.class);
+        model.getError().observe(this, t ->{
+            //showError(t);
+            Log.e("Main", "Error: " + t.getMessage());
+        });
+
+        model.loadData(data->{
+            hideProgress();
+            findViewById(R.id.bodyLinearLayout).setVisibility(View.VISIBLE);
+            Log.i("Main","Model data has loaded");
+        });
+
+        //set up data responsive UI
+        model.getEntriesFirstPage().observe(this, entries->{
+
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            ((ViewGroup)findViewById(R.id.logLinearLayout)).removeAllViews();
+
+            for(LogEntry entry : entries){
+                LogEntryFragment lef = new LogEntryFragment();
+                lef.logEntry = entry;
+                lef.crewMember = model.getCrewMember(entry.getEmployeeID());
+                fragmentTransaction.add(R.id.logLinearLayout, lef);
+            }
+            fragmentTransaction.commit();
+
+
+        });
+
+        model.getCrewMemberOnDuty().observe(this, crewMember -> {
+
+            LogEntry logEntry = model.getLatestLogEntry();
+
+            ImageView iv = findViewById(R.id.profilePicCrewOnDuty);
+            iv.setImageBitmap(crewMember.profileImage);
+
+            //known as
+            TextView tv = findViewById(R.id.crewOnDutyKnownAs);
+            tv.setText(crewMember.getKnownAs());
+
+            //state
+            LogEntry.State state = logEntry.getStateForAfterEvent();
+            int resource = getResourceID("log_entry.state." + state, "string");
+            tv = findViewById(R.id.state);
+            tv.setText(getString(resource));
+
+            //position lat/lon
+            tv = findViewById(R.id.latLon);
+            String latLon = logEntry.getLatitude() + "," + logEntry.getLongitude();
+            tv.setText(latLon);
+
+        });
+
+        Log.i("Main", "onCreate");
     }
 
-    protected void configureServices(){
-        try {
-            //configure log repo
+    @Override
+    protected void onNewIntent(Intent intent) {
+        if (intent.getBooleanExtra("wakeup", false)) {
+            // We were woken up by the alarm manager, but were already running
 
-            String apiBaseURL = "http://192.168.43.123:8002/api";
-            NetworkRepository networkRepository = NetworkRepository.getInstance();
-            networkRepository.setAPIBaseURL(apiBaseURL);
-            networkRepository.getError().observe(this, t->{
-                showError(t);
-            });
-
-            networkRepository.getServices().observe(this, services ->{
-                try {
-                    Service service = services.getService(CAPTAINS_LOG_SERVICE_NAME);
-                    if (service != null) {
-                        logRepository.setAPIBaseURL(service.getLocalEndpoint());
-                        logRepository.synchronise(networkRepository);
-                        logRepository.getError().observe(this, t -> {
-                            showError(t);
-                        });
-                    } else {
-                        throw new Exception("Could not find service " + CAPTAINS_LOG_SERVICE_NAME);
-                    }
-
-                    //configure employee repo
-                    service = services.getService(EMPLOYEES_SERVICE_NAME);
-                    if(service != null) {
-                        crewRepository.setAPIBaseURL(service.getLocalEndpoint());
-                        crewRepository.synchronise(networkRepository);
-                        crewRepository.getError().observe(this, t -> {
-                            showError(t);
-                        });
-                    } else {
-                        throw new Exception("Could not find service " + EMPLOYEES_SERVICE_NAME);
-                    }
-                    canLoadData = true;
-                    loadData();
-
-                    Log.i("Main", "Services loaded");
-                } catch (Exception e){
-                    showError(e);
-                }
-
-            });
-
-        } catch (Exception e){
-            showError(e);
         }
+        Log.i("Main", "onNewIntent");
     }
 
-    protected void loadData(){
-        if(!canLoadData)return;
-
-        try {
-            showProgress();
-
-            //start data loading sequence
-            crewRepository.getCrew().observe(this, c -> {
-                //download profile images
-                crew = c; //keep a record of crew
-                if(c.size() == 0){
-                    showError(0, "No crew");
-                    return;
-                }
-
-                eidMap = crew.employeeIDMap();
-
-                String baseURL = crewRepository.getAPIBaseURL() + "/resource/image/profile-pics/";
-                HashMap<String, Employee> url2crew = new HashMap<>();
-                for(Employee emp : crew) {
-                    url2crew.put(baseURL + emp.getKnownAs().replace(' ', '_') + ".jpg", emp);
-                }
-
-                Utils.downloadImages(url2crew.keySet()).observe(this, bms->{
-                    Log.i("Main", "Images downloaded");
-
-                    for(Map.Entry<String, Bitmap> entry : bms.entrySet()){
-                        Employee emp = url2crew.get(entry.getKey());
-                        emp.profileImage = entry.getValue();
-                    }
-
-                    logRepository.getLogEntriesFirstPage().observe(this, entries->{
-                        entries.sort("created", DataObjectCollection.SortOptions.DESC);
-                        if(entries.size() > 0){
-                            setLatestLogEntry(entries.get(0));
-                        }
-
-                        FragmentManager fragmentManager = getSupportFragmentManager();
-                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                        ((ViewGroup)findViewById(R.id.logLinearLayout)).removeAllViews();
-
-                        for(LogEntry entry : entries){
-                            LogEntryFragment lef = new LogEntryFragment();
-                            lef.logEntry = entry;
-                            if(eidMap.containsKey(entry.getEmployeeID())){
-                                lef.crewMember = eidMap.get(entry.getEmployeeID());
-                            }
-                            fragmentTransaction.add(R.id.logLinearLayout, lef);
-                        }
-                        fragmentTransaction.commit();
-
-                        Log.i("Main", "Retreived " + entries.size() + " entries");
-                        hideProgress();
-                        findViewById(R.id.bodyLinearLayout).setVisibility(View.VISIBLE);
-                    });
-                });
-
-            });
-        } catch (Exception e){
-            showError(e);
-            Log.e("Main", e.getMessage());
-        }
-    }
 
     @Override
     protected void onTimer(){
 
-        if(startedDuty != null && showOnDuty && crewOnDuty != null && warnOfExcessDuty != null && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())) {
+        /*if(startedDuty != null && showOnDuty && crewOnDuty != null && warnOfExcessDuty != null && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())) {
             Calendar now = Calendar.getInstance();
             if(now.getTimeInMillis() > warnOfExcessDuty.getTimeInMillis()){
                 openExcessOnDuty();
@@ -203,22 +167,21 @@ public class MainActivity extends GenericActivity {
                 double coeff = Math.min(excessDutyWarningCount*0.2, 0.5);
                 warnOfExcessDuty.setTimeInMillis(now.getTimeInMillis() + (long)(coeff*onDutytMovingTimeLimit*1000));
             }
-        }
+        }*/
 
-        updateOnDuty(showOnDuty);
+        //updateOnDuty(showOnDuty);
     }
 
-    protected void setLatestLogEntry(LogEntry logEntry){
-        if(latestLogEntry != null && latestLogEntry.getID() == logEntry.getID())return;
-
-        Employee emp = eidMap.get(logEntry.getEmployeeID());
+    protected void showCrewOnDuty(){
+        /*LogEntry logEntry = model.getLatestLogEntry();
+        CrewMember crewOnDuty = model.getCrewMemberOnDuty();
 
         ImageView iv = findViewById(R.id.profilePicCrewOnDuty);
-        iv.setImageBitmap(emp.profileImage);
+        iv.setImageBitmap(crewOnDuty.profileImage);
 
         //known as
         TextView tv = findViewById(R.id.crewOnDutyKnownAs);
-        tv.setText(emp.getKnownAs());
+        tv.setText(crewOnDuty.getKnownAs());
 
         //state
         LogEntry.State state = logEntry.getStateForAfterEvent();
@@ -232,17 +195,11 @@ public class MainActivity extends GenericActivity {
         tv.setText(latLon);
 
         //change of on duty
-        boolean dutyChange = crewOnDuty == null || (crewOnDuty.getID() != emp.getID());
-        if(dutyChange || logEntry.isStateChange()){
-            crewOnDuty = emp;
-            startedDuty = null;
-            excessDutyWarningCount = 0;
-            warnOfExcessDuty = null;
-        }
-        latestLogEntry = logEntry;
 
-        updateOnDuty(false);
-        logRepository.getCrewStats().observe(this, stats->{
+
+        //updateOnDuty(false);
+
+        /*logRepository.getCrewStats().observe(this, stats->{
             crewStats = stats; //keep a record
             String eid = latestLogEntry.getEmployeeID();
             if(startedDuty == null) {
@@ -250,7 +207,8 @@ public class MainActivity extends GenericActivity {
                 if(latestLogEntry.getStateForAfterEvent() == LogEntry.State.MOVING) {
 
                     //set the time for the excess duty wakeup
-                    long millis = startedDuty.getTimeInMillis() + (long)(1.1*onDutytMovingTimeLimit*1000); //10% extra
+                    long millis = startedDuty.getTimeInMillis() + (long)(1.1*onDutytMovingTimeLimit*1000) + logRepository.getServerTimeDifference(); //10% extra + server adjusted
+                    millis = Math.max(millis, Calendar.getInstance().getTimeInMillis() + 5*1000);
                     warnOfExcessDuty = Calendar.getInstance();
                     warnOfExcessDuty.setTimeInMillis(millis);
 
@@ -268,17 +226,11 @@ public class MainActivity extends GenericActivity {
 
 
             //update on duty
-            updateOnDuty(true);
-        });
+            //updateOnDuty(true);
+        });*/
     }
 
-    private double getDutyCompletion(){
-        Calendar now = logRepository.getServerTime();
-        long secondsTotal = Utils.dateDiff(now, startedDuty, TimeUnit.SECONDS);
-        return (double)secondsTotal / (double)onDutytMovingTimeLimit;
-    }
-
-    public void updateOnDuty(boolean show){
+    /*public void updateOnDuty(boolean show){
         if(latestLogEntry == null)return;
 
         showOnDuty = show;
@@ -328,28 +280,38 @@ public class MainActivity extends GenericActivity {
                 progressInfo.setVisibility(View.INVISIBLE);
                 break;
         }
-    }
+    } */
 
     public void openLogEntry(View view){
         if(logEntryDialog != null){
             logEntryDialog.dismiss();
         }
         logEntryDialog = new LogEntryDialogFragment();
-        logEntryDialog.crew = crew;
-        logEntryDialog.latestLogEntry = latestLogEntry;
+        logEntryDialog.crew = model.getCrew().getValue();
+        logEntryDialog.latestLogEntry = model.getLatestLogEntry();
 
         logEntryDialog.show(getSupportFragmentManager(), "LogEntryDialog");
+        /*
+                    /*Context ctx = getApplicationContext();
+                    Intent intent = new Intent(ctx, MainActivity.class);
+                    intent.putExtra("wakeup", true);
+                    PendingIntent pi = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+                    mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
+                    mgr.set(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis()+5000, pi);*/
+
+                    //configureServices();
 
     }
 
     public void openExcessOnDuty(){
-        if(excessOnDutyDialog != null){
+        /*if(excessOnDutyDialog != null){
             excessOnDutyDialog.dismiss();
         }
         excessOnDutyDialog = new ExcessOnDutyDialogFragment();
         excessOnDutyDialog.latestLogEntry = latestLogEntry;
 
-        excessOnDutyDialog.show(getSupportFragmentManager(), "ExcessOnDutyDialog");
+        excessOnDutyDialog.show(getSupportFragmentManager(), "ExcessOnDutyDialog");*/
     }
 
     @Override
@@ -367,17 +329,18 @@ public class MainActivity extends GenericActivity {
         } else if(dialog instanceof ErrorDialogFragment){
             Throwable t = ((ErrorDialogFragment)dialog).throwable;
             if(t instanceof WebserviceException && !((WebserviceException)t).isServiceAvailable()){
-                loadData();
+
             }
             Log.i("Main", "Error");
         }
 
         if(logEntry != null){
-            logRepository.saveLogEntry(logEntry).observe(this, le -> {
+            model.addLogEntry(logEntry);
+            /*logRepository.saveLogEntry(logEntry).observe(this, le -> {
                 showProgress();
                 setLatestLogEntry(le);
                 logRepository.getLogEntriesFirstPage();
-            });
+            });*/
         }
 
     }

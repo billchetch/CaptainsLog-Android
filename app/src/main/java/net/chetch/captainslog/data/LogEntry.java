@@ -1,4 +1,5 @@
 package net.chetch.captainslog.data;
+import net.chetch.webservices.DataField;
 import net.chetch.webservices.DataObject;
 import net.chetch.webservices.Webservice;
 
@@ -74,6 +75,20 @@ public class LogEntry extends DataObject {
         return null;
     }
 
+
+    @Override
+    public void init() {
+        super.init();
+
+        asEnum("state", State.class);
+        asEnum("event", Event.class);
+        asString("employee_id");
+        //asDouble("longitude");
+        //asDouble("latitdue");
+    }
+
+
+
     public List<Event> getPossibleEvents(){
         return getPossibleEvents(getState());
     }
@@ -95,63 +110,49 @@ public class LogEntry extends DataObject {
     }
 
     public Calendar getCreated(){
-        return getCalendar("created");
+        return getCasted("created");
     }
 
     public Event getEvent(){
-        return (Event)getCasted("event");
+        return getCasted("event");
     }
 
-    public String getEmployeeID(){ return getString("employee_id"); }
+    public String getEmployeeID(){ return getValue("employee_id").toString(); }
 
-    public Double getLatitude(){ return getDouble("latitude"); }
+    public Double getLatitude(){ return getCasted("latitude"); }
 
-    public Double getLongitude(){ return getDouble("longitude"); }
+    public Double getLongitude(){ return getCasted("longitude"); }
 
     public void setEvent(Event event, State defaultState){
         switch(event){
             case SET_ANCHOR:
-                set("state", State.MOVING); break;
+                setValue("state", State.MOVING); break;
             case RAISE_ANCHOR:
-                set("state", State.IDLE); break;
+                setValue("state", State.IDLE); break;
             default:
-                set("state", defaultState); break;
+                setValue("state", defaultState); break;
         }
 
-        set("event", event);
+        setValue("event", event);
     }
 
     public State getState(){
-        return (State)getCasted("state");
+        return getCasted("state");
     }
 
     public boolean requiresRevision(){
-        return getInteger("requires_revision") == 1;
+        return this.<Integer>getCasted("requires_revision") == 1;
     }
 
     public void setRequiresRevision(boolean mark){
-        set("requires_revision", mark ? 1 : 0);
+        setValue("requires_revision", mark ? 1 : 0);
     }
 
     public void setEmployeeID(String eid){
-        set("employee_id", eid);
+        setValue("employee_id", eid);
     }
 
     public void setComment(String comment){
-        set("comment", comment);
-    }
-
-    @Override
-    public Object getCasted(String fieldName){
-        switch(fieldName){
-            case "event":
-                return containsKey(fieldName) ? Event.valueOf(getString(fieldName)) : null;
-            case "state":
-                return containsKey(fieldName) ? State.valueOf(getString(fieldName)) : null;
-            case "created":
-                return getCalendar(fieldName);
-            default:
-                return super.getCasted(fieldName);
-        }
+        setValue("comment", comment);
     }
 }

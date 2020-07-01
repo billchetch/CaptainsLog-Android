@@ -15,6 +15,8 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface ICaptainsLogService {
+    String SERVICE_NAME = "Captains Log";
+
     @GET("about")
     Call<AboutService> getAbout();
 

@@ -7,4 +7,9 @@ public class LogEntries extends DataObjectCollection<LogEntry> {
     public LogEntries(){
         super(LogEntries.class);
     }
+
+
+    public LogEntries sortLatestFirst(){
+        return sort("created", DataObjectCollection.SortOptions.DESC);
+    }
 }

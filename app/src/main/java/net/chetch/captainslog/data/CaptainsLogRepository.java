@@ -2,15 +2,13 @@ package net.chetch.captainslog.data;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.util.Log;
 
 import net.chetch.webservices.AboutService;
-import net.chetch.webservices.LiveDataCache;
+import net.chetch.webservices.DataCache;
+import net.chetch.webservices.DataStore;
 import net.chetch.webservices.WebserviceRepository;
-import net.chetch.webservices.AboutService;
 import net.chetch.webservices.employees.Employees;
-import net.chetch.webservices.employees.EmployeesRepository;
-
-import java.util.List;
 
 public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogService> {
     static public int ENTRIES_PAGE_SIZE = 250;
@@ -22,59 +20,49 @@ public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogServ
     }
 
     public CaptainsLogRepository(){
-        this(LiveDataCache.SHORT_CACHE);
+        this(DataCache.VERY_SHORT_CACHE);
     }
     public CaptainsLogRepository(int defaultCacheTime){
         super(ICaptainsLogService.class, defaultCacheTime);
     }
 
-    public LiveData<AboutService> getAbout(){
-        LiveDataCache.CacheEntry entry = cache.<Employees>getCacheEntry("about-service");
+    public DataStore<AboutService> getAbout(){
+        DataCache.CacheEntry<AboutService> entry = cache.getCacheEntry("about-service");
 
-        if(entry.refreshValue()) {
+        if(entry.requiresUpdating()) {
             service.getAbout().enqueue(createCallback(entry));
         }
 
-        return entry.liveData;
+        return entry;
     }
 
-    public LiveData<LogEntries> getLogEntriesByPage(int pageNumber, int pageSize){
-        final MutableLiveData<LogEntries> entries = new MutableLiveData<>();
+    public DataStore<LogEntries> getLogEntriesFirstPage(){
+        DataCache.CacheEntry<LogEntries> entry = cache.getCacheEntry("entries-first-page");
 
-        service.getEntriesByPage(pageNumber, pageSize).enqueue(createCallback(entries));
-
-        return entries;
-    }
-
-    public LiveData<LogEntries> getLogEntriesByPage(int pageNumber){
-        return getLogEntriesByPage(pageNumber, ENTRIES_PAGE_SIZE);
-    }
-
-    public LiveData<LogEntries> getLogEntriesFirstPage(){
-        LiveDataCache.CacheEntry entry = cache.<LogEntries>getCacheEntry("entries-first-page");
-
-        if(entry.refreshValue()) {
+        if(entry.requiresUpdating()) {
             service.getEntriesByPage(1, ENTRIES_PAGE_SIZE).enqueue(createCallback(entry));
         }
 
-        return entry.liveData;
+        return entry;
     }
 
-    public LiveData<LogEntry> saveLogEntry(LogEntry logEntry){
-        final MutableLiveData<LogEntry> liveDataLogEntry = new MutableLiveData<>();
+    public DataStore<LogEntry> saveLogEntry(LogEntry logEntry){
+        final DataStore<LogEntry> dse = new DataStore<>();
 
-        service.putEntry(logEntry, logEntry.getID()).enqueue(createCallback(liveDataLogEntry));
+        service.putEntry(logEntry, logEntry.getID()).enqueue(createCallback(dse));
 
-        cache.setRefreshOnNextCall("entries-first-page");
+        cache.forceExpire("entries-first-page");
 
-        return liveDataLogEntry;
+        return dse;
     }
 
-    public LiveData<CrewStats> getCrewStats(){
-        final MutableLiveData<CrewStats> liveDataCrewStats = new MutableLiveData<>();
+    public DataStore<CrewStats> getCrewStats(){
+        DataCache.CacheEntry<CrewStats> entry = cache.getCacheEntry("crew-stats");
 
-        service.getCrewStats().enqueue(createCallback(liveDataCrewStats));
+        if(entry.requiresUpdating()) {
+            service.getCrewStats().enqueue(createCallback(entry));
+        }
 
-        return liveDataCrewStats;
+        return entry;
     }
 }

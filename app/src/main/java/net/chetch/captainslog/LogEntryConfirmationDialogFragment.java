@@ -10,13 +10,14 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.webservices.employees.Employee;
 
 public class LogEntryConfirmationDialogFragment extends GenericDialogFragment{
 
     public LogEntry logEntry;
-    public Employee crewMember;
+    public CrewMember crewMember;
 
 
     @Override
