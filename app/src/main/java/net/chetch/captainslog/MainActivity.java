@@ -52,14 +52,11 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends GenericActivity {
     MainViewModel model;
     LogEntryDialogFragment logEntryDialog = null;
+    ExcessOnDutyDialogFragment excessOnDutyDialog = null;
 
     GPSPosition latestGPS = null;
 
-    boolean showOnDuty = false;
-
-    ExcessOnDutyDialogFragment excessOnDutyDialog = null;
-
-    //GPSRepository = GPSRepository.getInstance();
+    Calendar lastXSDutyWarning = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +88,7 @@ public class MainActivity extends GenericActivity {
 
         model = ViewModelProviders.of(this).get(MainViewModel.class);
         model.getError().observe(this, t ->{
-            //showError(t);
+            showError(t);
             Log.e("Main", "Error: " + t.getMessage());
         });
 
@@ -116,7 +113,8 @@ public class MainActivity extends GenericActivity {
             }
             fragmentTransaction.commit();
 
-
+            Log.i("Main","First page of entries displayed");
+            hideProgress();
         });
 
         model.getCrewMemberOnDuty().observe(this, crewMember -> {
@@ -131,7 +129,7 @@ public class MainActivity extends GenericActivity {
             tv.setText(crewMember.getKnownAs());
 
             //state
-            LogEntry.State state = logEntry.getStateForAfterEvent();
+            LogEntry.State state = crewMember.getLastState();
             int resource = getResourceID("log_entry.state." + state, "string");
             tv = findViewById(R.id.state);
             tv.setText(getString(resource));
@@ -141,6 +139,9 @@ public class MainActivity extends GenericActivity {
             String latLon = logEntry.getLatitude() + "," + logEntry.getLongitude();
             tv.setText(latLon);
 
+            updateOnDuty(true);
+
+            Log.i("Main", "Displayed crew member on duty");
         });
 
         Log.i("Main", "onCreate");
@@ -159,81 +160,35 @@ public class MainActivity extends GenericActivity {
     @Override
     protected void onTimer(){
 
-        /*if(startedDuty != null && showOnDuty && crewOnDuty != null && warnOfExcessDuty != null && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())) {
-            Calendar now = Calendar.getInstance();
-            if(now.getTimeInMillis() > warnOfExcessDuty.getTimeInMillis()){
+        CrewMember crewMemberOnDuty = model.getCrewMemberOnDuty().getValue();
+        if(crewMemberOnDuty != null) {
+            Calendar cal = crewMemberOnDuty.getPrevXSOnDutyWarning();
+            boolean requiresWarning = cal != null && (lastXSDutyWarning == null || lastXSDutyWarning.getTimeInMillis() < cal.getTimeInMillis());
+            if(requiresWarning && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())) {
                 openExcessOnDuty();
-                excessDutyWarningCount++;
-                double coeff = Math.min(excessDutyWarningCount*0.2, 0.5);
-                warnOfExcessDuty.setTimeInMillis(now.getTimeInMillis() + (long)(coeff*onDutytMovingTimeLimit*1000));
+                Log.i("Main", "Now: " + Utils.formatDate(Calendar.getInstance(), Webservice.DEFAULT_DATE_FORMAT) + ", prev warn: " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT));
             }
-        }*/
-
-        //updateOnDuty(showOnDuty);
+        }
     }
 
-    protected void showCrewOnDuty(){
-        /*LogEntry logEntry = model.getLatestLogEntry();
-        CrewMember crewOnDuty = model.getCrewMemberOnDuty();
 
-        ImageView iv = findViewById(R.id.profilePicCrewOnDuty);
-        iv.setImageBitmap(crewOnDuty.profileImage);
+    protected void setWakeUp(Calendar wakeUp){
 
-        //known as
-        TextView tv = findViewById(R.id.crewOnDutyKnownAs);
-        tv.setText(crewOnDuty.getKnownAs());
+        //create an app wakeup
+        Context ctx = getApplicationContext();
+        Intent intent = new Intent(ctx, this.getClass());
+        intent.putExtra("wakeup", true);
+        PendingIntent pi = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+        mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
+        mgr.set(AlarmManager.RTC_WAKEUP, wakeUp.getTimeInMillis(), pi);
 
-        //state
-        LogEntry.State state = logEntry.getStateForAfterEvent();
-        int resource = getResourceID("log_entry.state." + state, "string");
-        tv = findViewById(R.id.state);
-        tv.setText(getString(resource));
-
-        //position lat/lon
-        tv = findViewById(R.id.latLon);
-        String latLon = "0.324333, -1234222";
-        tv.setText(latLon);
-
-        //change of on duty
-
-
-        //updateOnDuty(false);
-
-        /*logRepository.getCrewStats().observe(this, stats->{
-            crewStats = stats; //keep a record
-            String eid = latestLogEntry.getEmployeeID();
-            if(startedDuty == null) {
-                startedDuty = crewStats.getStartedDuty(eid);
-                if(latestLogEntry.getStateForAfterEvent() == LogEntry.State.MOVING) {
-
-                    //set the time for the excess duty wakeup
-                    long millis = startedDuty.getTimeInMillis() + (long)(1.1*onDutytMovingTimeLimit*1000) + logRepository.getServerTimeDifference(); //10% extra + server adjusted
-                    millis = Math.max(millis, Calendar.getInstance().getTimeInMillis() + 5*1000);
-                    warnOfExcessDuty = Calendar.getInstance();
-                    warnOfExcessDuty.setTimeInMillis(millis);
-
-                    //create an app wakeup
-                    Context ctx = getApplicationContext();
-                    Intent intent = new Intent(ctx, MainActivity.class);
-                    intent.putExtra("wakeup", true);
-                    PendingIntent pi = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                    AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-                    mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
-                    mgr.set(AlarmManager.RTC_WAKEUP, warnOfExcessDuty.getTimeInMillis(), pi);
-
-                }
-            }
-
-
-            //update on duty
-            //updateOnDuty(true);
-        });*/
     }
 
-    /*public void updateOnDuty(boolean show){
-        if(latestLogEntry == null)return;
+    public void updateOnDuty(boolean show){
+        CrewMember crewMemberOnDuty = model.getCrewMemberOnDuty().getValue();
+        if(crewMemberOnDuty == null)return;
 
-        showOnDuty = show;
         ImageView progressBar = findViewById(R.id.progressOnDutyBar);
         TextView progressInfo = findViewById(R.id.progressOnDutyInfo);
         if(!show){
@@ -243,16 +198,14 @@ public class MainActivity extends GenericActivity {
         }
 
 
-        switch(latestLogEntry.getStateForAfterEvent()){
+        switch(crewMemberOnDuty.getLastState()){
             case MOVING:
-                Calendar now = logRepository.getServerTime(); //Calendar.getInstance();
-                long hours  = Utils.hoursDiff(now, startedDuty);
-                long minutes = Utils.dateDiff(now, startedDuty, TimeUnit.MINUTES) - 60*hours;
-                Log.i("Main", "Now: " + Utils.formatDate(now, Webservice.DEFAULT_DATE_FORMAT) + ", Started: " + Utils.formatDate(startedDuty, Webservice.DEFAULT_DATE_FORMAT));
-                double dutyCompletion = getDutyCompletion();
+                //do some calculations
+                long hours  = crewMemberOnDuty.getOnDutyHours();
+                long minutes = crewMemberOnDuty.getOnDutyMinutes();
+                double dutyCompletion = crewMemberOnDuty.getOnDutyCompletion();
                 int percentage = (int)(100*dutyCompletion);
                 int age = Math.min((int)Math.floor(dutyCompletion * 5), 5);
-
                 String s = (hours > 0 ? hours + "h " : "") + minutes + "m";
                 s += " / " + percentage + "%";
                 progressInfo.setText(s);
@@ -272,7 +225,6 @@ public class MainActivity extends GenericActivity {
 
                 progressBar.setVisibility(View.VISIBLE);
                 progressBar.requestLayout();
-
                 break;
 
             case IDLE:
@@ -280,52 +232,50 @@ public class MainActivity extends GenericActivity {
                 progressInfo.setVisibility(View.INVISIBLE);
                 break;
         }
-    } */
+    }
 
     public void openLogEntry(View view){
-        if(logEntryDialog != null){
+        Calendar momentLater = Calendar.getInstance();
+        momentLater.setTimeInMillis(momentLater.getTimeInMillis() + 5000);
+        setWakeUp(momentLater);
+
+        /*if(logEntryDialog != null){
             logEntryDialog.dismiss();
         }
         logEntryDialog = new LogEntryDialogFragment();
         logEntryDialog.crew = model.getCrew().getValue();
         logEntryDialog.latestLogEntry = model.getLatestLogEntry();
 
-        logEntryDialog.show(getSupportFragmentManager(), "LogEntryDialog");
-        /*
-                    /*Context ctx = getApplicationContext();
-                    Intent intent = new Intent(ctx, MainActivity.class);
-                    intent.putExtra("wakeup", true);
-                    PendingIntent pi = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                    AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-                    mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
-                    mgr.set(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis()+5000, pi);*/
-
-                    //configureServices();
-
+        logEntryDialog.show(getSupportFragmentManager(), "LogEntryDialog");*/
     }
 
     public void openExcessOnDuty(){
-        /*if(excessOnDutyDialog != null){
+        if(excessOnDutyDialog != null){
             excessOnDutyDialog.dismiss();
         }
         excessOnDutyDialog = new ExcessOnDutyDialogFragment();
-        excessOnDutyDialog.latestLogEntry = latestLogEntry;
-
-        excessOnDutyDialog.show(getSupportFragmentManager(), "ExcessOnDutyDialog");*/
+        excessOnDutyDialog.show(getSupportFragmentManager(), "ExcessOnDutyDialog");
     }
 
     @Override
     public void onDialogPositiveClick(GenericDialogFragment dialog){
-        LogEntry logEntry = null;
         if(dialog instanceof LogEntryConfirmationDialogFragment){
-            logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
+            LogEntry logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
             logEntryDialog.dismiss();
+            model.saveLogEntry(logEntry);
+            showProgress();
 
             Log.i("Main", "Saving log entry");
         } else if(dialog instanceof ExcessOnDutyDialogFragment){
-            logEntry = ((ExcessOnDutyDialogFragment)dialog).logEntry;
-
-            Log.i("Main", "Saving xs on duty reason");
+            String reason = ((ExcessOnDutyDialogFragment)dialog).reason;
+            try {
+                model.addXSDutyReaon(reason);
+                lastXSDutyWarning = Calendar.getInstance();
+                showProgress();
+                Log.i("Main", "Saving xs on duty reason");
+            } catch (Exception e){
+                showError(e);
+            }
         } else if(dialog instanceof ErrorDialogFragment){
             Throwable t = ((ErrorDialogFragment)dialog).throwable;
             if(t instanceof WebserviceException && !((WebserviceException)t).isServiceAvailable()){
@@ -333,15 +283,5 @@ public class MainActivity extends GenericActivity {
             }
             Log.i("Main", "Error");
         }
-
-        if(logEntry != null){
-            model.addLogEntry(logEntry);
-            /*logRepository.saveLogEntry(logEntry).observe(this, le -> {
-                showProgress();
-                setLatestLogEntry(le);
-                logRepository.getLogEntriesFirstPage();
-            });*/
-        }
-
     }
 }

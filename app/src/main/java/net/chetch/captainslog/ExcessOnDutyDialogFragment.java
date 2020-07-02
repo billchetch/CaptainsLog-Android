@@ -14,10 +14,8 @@ import net.chetch.webservices.employees.Employee;
 
 public class ExcessOnDutyDialogFragment extends GenericDialogFragment {
 
-    public LogEntry latestLogEntry = null;
-    public LogEntry logEntry = new LogEntry();
-    protected LogEntry.XSDutyReason selectedReason = null;
-
+    private LogEntry.XSDutyReason selectedReason = null;
+    public String reason = null;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -77,6 +75,9 @@ public class ExcessOnDutyDialogFragment extends GenericDialogFragment {
     }
 
     public void saveReason(){
+
+        LogEntry latestLogEntry = ((MainActivity)getActivity()).model.getLatestLogEntry();
+
         if(selectedReason == null){
             dialogManager.showWarningDialog(getString(R.string.dialog_warning_choose_event));
             return;
@@ -84,23 +85,20 @@ public class ExcessOnDutyDialogFragment extends GenericDialogFragment {
         if(latestLogEntry == null || latestLogEntry.getEmployeeID() == null){
             dialogManager.showWarningDialog(getString(R.string.dialog_warning_choose_crew));
             return;
-        } else {
-            logEntry.setEmployeeID(latestLogEntry.getEmployeeID());
         }
+
         String comment = null;
         if(selectedReason == LogEntry.XSDutyReason.OTHER_REASON){
             TextView tv = contentView.findViewById(R.id.otherReason);
-            comment = tv.getText() == null ? null : tv.getText().toString().trim();
+            reason = tv.getText() == null ? null : tv.getText().toString().trim();
             if(comment == null || comment.length() == 0) {
                 dialogManager.showWarningDialog(getString(R.string.dialog_warning_add_comment));
                 return;
             }
         } else {
             String resourceName = "label.excess_duty." + selectedReason.toString();
-            comment = getString(getResourceID(resourceName, "string"));
+            reason = getString(getResourceID(resourceName, "string"));
         }
-        logEntry.setEvent(LogEntry.Event.ALERT, latestLogEntry.getStateForAfterEvent());
-        logEntry.setComment(comment);
 
         dismiss();
 

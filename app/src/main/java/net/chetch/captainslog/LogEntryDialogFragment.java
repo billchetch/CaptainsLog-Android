@@ -166,14 +166,13 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
                 case RAISE_ANCHOR:
                 case DUTY_CHANGE:
                     if(event == LogEntry.Event.DUTY_CHANGE && latestLogEntry != null) {
-
                         populateCrewView(crew.<Crew>active().exclude("employee_id", latestLogEntry.getEmployeeID()));
                     } else {
                         populateCrewView(crew.active());
                     }
                     contentView.findViewById(R.id.logEntryDialogCrewListContainer).setVisibility(View.VISIBLE);
                     contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
-                    logEntry.setEmployeeID(null);
+                    logEntry.setEmployeeID(null); //set to null as it needs to be chosen later
                     break;
 
                 default:

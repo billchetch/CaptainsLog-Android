@@ -2,34 +2,52 @@ package net.chetch.captainslog.data;
 
 import android.util.Log;
 
+import net.chetch.utilities.Utils;
 import net.chetch.webservices.employees.Employee;
 
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 public class CrewMember extends Employee {
 
-    public transient Calendar startedDuty;
-    public transient Calendar endedDuty;
-    public transient LogEntry.State currentState;
-    public transient long onDutyLimit = -1; //in seconds
+    static public int onDutyLimit = 60*60*1; //in seconds
 
+    public transient CrewMemberStats stats;
+    private transient Calendar lastWarnedOn = null;
 
-    public double getOnDutyCompletion() throws Exception{
-        if(hasOnDutyLimit() && startedDuty != null && endedDuty == null){
+    public double getOnDutyCompletion(){
+        if(hasOnDutyLimit() && isOnDuty()){
             Calendar now = Calendar.getInstance();
-            long elapsed = now.getTimeInMillis() - startedDuty.getTimeInMillis();
-            return (double)onDutyLimit*1000 / (double)(elapsed);
+            long elapsed = now.getTimeInMillis() - stats.getStartedDuty().getTimeInMillis();
+            return (double)(elapsed) / (double)(onDutyLimit*1000);
         } else {
-            throw new Exception("Crew is not on relevant duty");
+            return 0;
         }
     }
 
+    public int getOnDutyHours(){
+        Calendar now = Calendar.getInstance();
+        int hours = (int)Utils.hoursDiff(now, stats.getStartedDuty());
+        return hours;
+    }
+
+    public int getOnDutyMinutes(){
+        Calendar now = Calendar.getInstance();
+        int hours = getOnDutyHours();
+        int minutes = (int)Utils.dateDiff(now, stats.getStartedDuty(), TimeUnit.MINUTES) - 60*hours;
+        return minutes;
+    }
+
     public boolean isOnDuty(){
-        return startedDuty != null && endedDuty == null;
+        return stats.getStartedDuty() != null && stats.getEndedDuty() == null;
     }
 
     public boolean hasOnDutyLimit(){
-        return currentState == LogEntry.State.MOVING && onDutyLimit > 0;
+        return stats.getLastState() == LogEntry.State.MOVING && onDutyLimit > 0;
+    }
+
+    public LogEntry.State getLastState(){
+        return stats.getLastState();
     }
 
     public boolean hasExceededOnDutyLimit(){
@@ -42,6 +60,50 @@ public class CrewMember extends Employee {
 
         } else {
             return false;
+        }
+    }
+
+    private double getXSOnDutyWarningRatio(double intervalAsRatio, int shiftDirection){
+        double dutyCompletion = getOnDutyCompletion();
+        double shift = intervalAsRatio / 2;
+        double ratio = Math.ceil((dutyCompletion - shift)/intervalAsRatio)*intervalAsRatio + shiftDirection*shift;
+        return ratio;
+    }
+
+    public Calendar getNextXSOnDutyWarning(){
+        if(hasOnDutyLimit()){
+            double dutyCompletion = getOnDutyCompletion();
+            if(dutyCompletion > 1){
+                double nextWarning = getXSOnDutyWarningRatio(0.1, 1);
+                Log.i("CrewMember", "duty completion " + dutyCompletion + "gives next warning ratio " + nextWarning);
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(stats.getStartedDuty().getTimeInMillis() + (long)(onDutyLimit*1000*nextWarning));
+                return cal;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public Calendar getPrevXSOnDutyWarning(){
+        if(hasOnDutyLimit()){
+            double dutyCompletion = getOnDutyCompletion();
+            if(dutyCompletion > 1){
+                double prevWarning = getXSOnDutyWarningRatio(0.1, -1);
+                Log.i("CrewMember", "duty completion " + dutyCompletion + " prev warning ratio " + prevWarning);
+                if(prevWarning < 1)return null;
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(stats.getStartedDuty().getTimeInMillis() + (long)(onDutyLimit*1000*prevWarning));
+                return cal;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
 

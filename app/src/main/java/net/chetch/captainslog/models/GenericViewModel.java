@@ -3,29 +3,16 @@ package net.chetch.captainslog.models;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
-import android.graphics.Bitmap;
 import android.util.Log;
 
-import net.chetch.captainslog.MainActivity;
 import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.CrewRepository;
-import net.chetch.captainslog.data.CrewStats;
 import net.chetch.captainslog.data.LogEntries;
 import net.chetch.captainslog.data.LogEntry;
-import net.chetch.utilities.Utils;
-import net.chetch.webservices.DataCache;
-import net.chetch.webservices.DataObjectCollection;
-import net.chetch.webservices.WebserviceRepository;
+import net.chetch.webservices.DataStore;
 import net.chetch.webservices.WebserviceViewModel;
-import net.chetch.webservices.employees.Employee;
-import net.chetch.webservices.employees.Employees;
-import net.chetch.webservices.network.Service;
-
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
 public class GenericViewModel extends WebserviceViewModel {
     static public final String CAPTAINS_LOG_SERVICE_NAME = "Captains Log";
@@ -73,8 +60,6 @@ public class GenericViewModel extends WebserviceViewModel {
                     loadEntries(observer);
                 });
             }); //end getting the gcrew*/
-
-            loadEntries(observer);
         }); //end generic data load (service config)
     }
 
@@ -84,16 +69,15 @@ public class GenericViewModel extends WebserviceViewModel {
 
     protected void loadEntries(Observer observer){
         logRepository.getCrewStats().observe(stats->{
-            Log.i("Main", "Loaded crew stats");
+            Log.i("GVM", "Loaded crew stats");
 
             logRepository.getLogEntriesFirstPage().add(liveDataEntriesFirstPage).observe(entries->{
                 //update all crew with stats
                 for(LogEntry entry : entries){
                     String eid = entry.getEmployeeID();
                     if(eidMap.containsKey(eid) && stats.hasStats(eid)){
-                        CrewMember cm = (CrewMember)eidMap.get(eid);
-                        cm.startedDuty = stats.getStartedDuty(eid);
-                        cm.endedDuty = stats.getEndedDuty(eid);
+                        CrewMember cm = eidMap.get(eid);
+                        cm.stats = stats.getStats(eid);
                     }
                 }
 
@@ -103,7 +87,7 @@ public class GenericViewModel extends WebserviceViewModel {
                     setLatestLogEntry(entries.get(0));
                 }
 
-                Log.i("Main", "loadData: Entries loaded");
+                Log.i("GVM", "loadData: Entries loaded");
                 notifyObserver(observer, entries);
             });
         });
@@ -127,6 +111,7 @@ public class GenericViewModel extends WebserviceViewModel {
         CrewMember cm = eidMap.get(logEntry.getEmployeeID());
         crewMemberOnDuty = cm;
         liveDataCrewMemberOnDuty.setValue(crewMemberOnDuty);
+        Log.i("GVM", "Set lates entry");
     }
 
     public LogEntry getLatestLogEntry(){
@@ -137,9 +122,24 @@ public class GenericViewModel extends WebserviceViewModel {
         return eidMap.containsKey(employeeID) ? eidMap.get(employeeID) : null;
     }
 
-    public void addLogEntry(LogEntry logEntry){
-        logRepository.saveLogEntry(logEntry).observe(newLogEntry->{
-            logRepository.getLogEntriesFirstPage();
+    public DataStore<LogEntry> saveLogEntry(LogEntry logEntry){
+        return logRepository.saveLogEntry(logEntry).observe(newLogEntry->{
+            Log.i("GVM", "Entry " + newLogEntry.getID() + " saved");
+            if(logEntry.getID() == 0) {
+                loadEntries();
+            }
         });
+    }
+
+    public DataStore<LogEntry> addXSDutyReaon(String reason) throws Exception{
+        LogEntry latestLogEntry = getLatestLogEntry();
+        if(latestLogEntry == null){
+            throw new Exception("No previous log entry");
+        }
+        LogEntry logEntry = new LogEntry();
+        logEntry.setEmployeeID(latestLogEntry.getEmployeeID());
+        logEntry.setEvent(LogEntry.Event.ALERT, latestLogEntry.getStateForAfterEvent());
+        logEntry.setComment(reason);
+        return saveLogEntry(logEntry);
     }
 }
