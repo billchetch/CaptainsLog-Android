@@ -46,7 +46,8 @@ public class ErrorDialogFragment extends GenericDialogFragment implements OnClic
         TextView details = (TextView)contentView.findViewById(R.id.errorDetails);
         details.setText(errorType + ": " + errorMessage);
 
-        contentView.setOnClickListener(this);
+
+        contentView.findViewById(R.id.okButton).setOnClickListener(this);
 
         // Create the AlertDialog object and return it
         dialog = createDialog();

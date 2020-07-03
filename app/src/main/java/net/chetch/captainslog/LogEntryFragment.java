@@ -87,11 +87,15 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
 
     private void markForRevision(){
         logEntry.setRequiresRevision(!logEntry.requiresRevision());
-        ((MainActivity)getActivity()).model.saveLogEntry(logEntry).observe(entry->{
-            ((TextView)getView().findViewById(R.id.knownAs)).setText(getKnownAsAndEvent());
-            logEntry.read(entry);
-            Log.i("LEF", "Marked entry ");
-        });
+        try {
+            ((MainActivity) getActivity()).model.saveLogEntry(logEntry).observe(entry -> {
+                ((TextView) getView().findViewById(R.id.knownAs)).setText(getKnownAsAndEvent());
+                logEntry.read(entry);
+                Log.i("LEF", "Marked entry ");
+            });
+        } catch (Exception e){
+            ((MainActivity) getActivity()).showError(e);
+        }
     }
 
     @Override

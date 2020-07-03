@@ -49,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static android.view.View.GONE;
+
 public class MainActivity extends GenericActivity {
     MainViewModel model;
     LogEntryDialogFragment logEntryDialog = null;
@@ -57,6 +59,15 @@ public class MainActivity extends GenericActivity {
     GPSPosition latestGPS = null;
 
     Calendar lastXSDutyWarning = null;
+
+    Observer onDataLoaded  = data -> {
+        hideProgress();
+        findViewById(R.id.bodyLinearLayout).setVisibility(View.VISIBLE);
+        Log.i("Main","Model data has loaded");
+        findViewById(R.id.btnAddLogEntry).setEnabled(true);
+        startTimer(10);
+        updateOnDuty(true);
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,24 +92,31 @@ public class MainActivity extends GenericActivity {
             return;
         }
 
-
+        //set up some initia stuff
         includeOptionsMenu();
-        //startTimer(10);
         showProgress();
+        findViewById(R.id.btnAddLogEntry).setEnabled(false);
+        findViewById(R.id.headingLayout).setVisibility(View.GONE);
 
+        //get the model, load data and add data observers
         model = ViewModelProviders.of(this).get(MainViewModel.class);
+
+        //observe errors
         model.getError().observe(this, t ->{
             showError(t);
             Log.e("Main", "Error: " + t.getMessage());
         });
 
-        model.loadData(data->{
-            hideProgress();
-            findViewById(R.id.bodyLinearLayout).setVisibility(View.VISIBLE);
-            Log.i("Main","Model data has loaded");
+        //load data
+        model.loadData(onDataLoaded);
+
+        //gps updates
+        model.getGPSPosition().observe(this, pos->{
+            updateOnDuty(true);
+            Log.i("Main", "lobserving latest gps position ");
         });
 
-        //set up data responsive UI
+        //entries
         model.getEntriesFirstPage().observe(this, entries->{
 
             FragmentManager fragmentManager = getSupportFragmentManager();
@@ -117,6 +135,7 @@ public class MainActivity extends GenericActivity {
             hideProgress();
         });
 
+        //update UI with crew member on duty
         model.getCrewMemberOnDuty().observe(this, crewMember -> {
 
             LogEntry logEntry = model.getLatestLogEntry();
@@ -127,17 +146,6 @@ public class MainActivity extends GenericActivity {
             //known as
             TextView tv = findViewById(R.id.crewOnDutyKnownAs);
             tv.setText(crewMember.getKnownAs());
-
-            //state
-            LogEntry.State state = crewMember.getLastState();
-            int resource = getResourceID("log_entry.state." + state, "string");
-            tv = findViewById(R.id.state);
-            tv.setText(getString(resource));
-
-            //position lat/lon
-            tv = findViewById(R.id.latLon);
-            String latLon = logEntry.getLatitude() + "," + logEntry.getLongitude();
-            tv.setText(latLon);
 
             updateOnDuty(true);
 
@@ -169,8 +177,9 @@ public class MainActivity extends GenericActivity {
                 Log.i("Main", "Now: " + Utils.formatDate(Calendar.getInstance(), Webservice.DEFAULT_DATE_FORMAT) + ", prev warn: " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT));
             }
         }
+        model.getLatestGPSPosition();
+        updateOnDuty(true);
     }
-
 
     protected void setWakeUp(Calendar wakeUp){
 
@@ -182,6 +191,8 @@ public class MainActivity extends GenericActivity {
         AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
         mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
         mgr.set(AlarmManager.RTC_WAKEUP, wakeUp.getTimeInMillis(), pi);
+
+        Log.i("Main", "Setting wakeup for " + Utils.formatDate(wakeUp, Webservice.DEFAULT_DATE_FORMAT));
 
     }
 
@@ -197,7 +208,7 @@ public class MainActivity extends GenericActivity {
             return;
         }
 
-
+        GPSPosition pos = model.getGPSPosition().getValue();
         switch(crewMemberOnDuty.getLastState()){
             case MOVING:
                 //do some calculations
@@ -225,28 +236,51 @@ public class MainActivity extends GenericActivity {
 
                 progressBar.setVisibility(View.VISIBLE);
                 progressBar.requestLayout();
+
+                //bearing + speed
+                if(pos != null && pos.getBearing() != null){
+                    ImageView dir = findViewById(R.id.direction);
+                    dir.setRotation(pos.getBearing());
+
+                    TextView tvHeading = findViewById(R.id.heading);
+                    String heading = pos.getBearing() +  getString(R.string.symbol_degree) +  " @ " + String.format("%.1f", pos.getSpeed(GPSPosition.SpeedUnits.NPH)) + "kts";
+                    tvHeading.setText(heading);
+                    findViewById(R.id.headingLayout).setVisibility(View.VISIBLE);
+                }
+
                 break;
 
             case IDLE:
                 progressBar.setVisibility(View.INVISIBLE);
-                progressInfo.setVisibility(View.INVISIBLE);
+                int resource = getResourceID("log_entry.state." + crewMemberOnDuty.getLastState(), "string");
+                progressInfo.setText(getString(resource));
+                progressInfo.setVisibility(View.VISIBLE);
+                findViewById(R.id.headingLayout).setVisibility(View.GONE);
                 break;
+        }
+
+        //moving or idle we update the latest lat/lon position
+        if(pos != null){
+            TextView gpstv = findViewById(R.id.gps);
+            String lat = String.format("%.5f", pos.getLatitude());
+            String lon = String.format("%.5f", pos.getLongitude());
+            gpstv.setText(lat + "/" + lon);
         }
     }
 
     public void openLogEntry(View view){
-        Calendar momentLater = Calendar.getInstance();
+        /*Calendar momentLater = Calendar.getInstance();
         momentLater.setTimeInMillis(momentLater.getTimeInMillis() + 5000);
-        setWakeUp(momentLater);
+        setWakeUp(momentLater);*/
 
-        /*if(logEntryDialog != null){
+        if(logEntryDialog != null){
             logEntryDialog.dismiss();
         }
         logEntryDialog = new LogEntryDialogFragment();
         logEntryDialog.crew = model.getCrew().getValue();
         logEntryDialog.latestLogEntry = model.getLatestLogEntry();
 
-        logEntryDialog.show(getSupportFragmentManager(), "LogEntryDialog");*/
+        logEntryDialog.show(getSupportFragmentManager(), "LogEntryDialog");
     }
 
     public void openExcessOnDuty(){
@@ -262,8 +296,13 @@ public class MainActivity extends GenericActivity {
         if(dialog instanceof LogEntryConfirmationDialogFragment){
             LogEntry logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
             logEntryDialog.dismiss();
-            model.saveLogEntry(logEntry);
-            showProgress();
+
+            try {
+                model.saveLogEntry(logEntry);
+                showProgress();
+            } catch (Exception e){
+                showError(e);
+            }
 
             Log.i("Main", "Saving log entry");
         } else if(dialog instanceof ExcessOnDutyDialogFragment){
@@ -279,7 +318,8 @@ public class MainActivity extends GenericActivity {
         } else if(dialog instanceof ErrorDialogFragment){
             Throwable t = ((ErrorDialogFragment)dialog).throwable;
             if(t instanceof WebserviceException && !((WebserviceException)t).isServiceAvailable()){
-
+                showProgress();
+                model.loadData(onDataLoaded);
             }
             Log.i("Main", "Error");
         }

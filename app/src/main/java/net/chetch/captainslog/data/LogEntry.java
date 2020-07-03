@@ -2,6 +2,7 @@ package net.chetch.captainslog.data;
 import net.chetch.webservices.DataField;
 import net.chetch.webservices.DataObject;
 import net.chetch.webservices.Webservice;
+import net.chetch.webservices.gps.GPSPosition;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -120,8 +121,15 @@ public class LogEntry extends DataObject {
     public String getEmployeeID(){ return getValue("employee_id").toString(); }
 
     public Double getLatitude(){ return getCasted("latitude"); }
+    public void setLatitude(double l){ setValue("latitude", l); }
 
     public Double getLongitude(){ return getCasted("longitude"); }
+    public void setLongitude(double l){ setValue("longitude", l); }
+
+    public void setGPSPosition(GPSPosition pos){
+        setLongitude(pos.getLongitude());
+        setLatitude(pos.getLatitude());
+    }
 
     public void setEvent(Event event, State defaultState){
         switch(event){

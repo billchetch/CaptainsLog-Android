@@ -13,6 +13,8 @@ import net.chetch.captainslog.data.LogEntries;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.webservices.DataStore;
 import net.chetch.webservices.WebserviceViewModel;
+import net.chetch.webservices.gps.GPSPosition;
+import net.chetch.webservices.gps.GPSRepository;
 
 public class GenericViewModel extends WebserviceViewModel {
     static public final String CAPTAINS_LOG_SERVICE_NAME = "Captains Log";
@@ -20,6 +22,7 @@ public class GenericViewModel extends WebserviceViewModel {
 
     CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
     CrewRepository crewRepository = CrewRepository.getInstance();
+    GPSRepository gpsRepository = GPSRepository.getInstance();
 
     Crew.FieldMap<String> eidMap;
     LogEntry latestLogEntry;
@@ -28,10 +31,12 @@ public class GenericViewModel extends WebserviceViewModel {
     MutableLiveData<Crew> liveDataCrew = new MutableLiveData<>();
     MutableLiveData<LogEntries> liveDataEntriesFirstPage = new MutableLiveData<>();
     MutableLiveData<CrewMember> liveDataCrewMemberOnDuty = new MutableLiveData<>();
+    MutableLiveData<GPSPosition> liveDataGPSPosition = new MutableLiveData<>();
 
     public GenericViewModel(){
         addRepo(crewRepository);
         addRepo(logRepository);
+        addRepo(gpsRepository);
 
         serverTimeDisparityOption = ServerTimeDisparityOptions.LOG_WARNING;
 
@@ -58,8 +63,10 @@ public class GenericViewModel extends WebserviceViewModel {
             crewRepository.getCrew().add(liveDataCrew).observe(crew->{
                 crewRepository.getProfilePics(crew).observe( bms ->{
                     loadEntries(observer);
+                    gpsRepository.getLatestPosition(); //get latest gps position
                 });
-            }); //end getting the gcrew*/
+            }); //end getting the crew
+
         }); //end generic data load (service config)
     }
 
@@ -122,10 +129,18 @@ public class GenericViewModel extends WebserviceViewModel {
         return eidMap.containsKey(employeeID) ? eidMap.get(employeeID) : null;
     }
 
-    public DataStore<LogEntry> saveLogEntry(LogEntry logEntry){
-        return logRepository.saveLogEntry(logEntry).observe(newLogEntry->{
-            Log.i("GVM", "Entry " + newLogEntry.getID() + " saved");
-            if(logEntry.getID() == 0) {
+    public DataStore<LogEntry> saveLogEntry(LogEntry logEntry) throws Exception{
+        if(logEntry.isNew()){ //is a new entry we
+            GPSPosition pos = getGPSPosition().getValue();
+            if(pos == null){
+                throw new Exception("Cannot save log entry as no GPS position available");
+            }
+            logEntry.setGPSPosition(pos);
+        }
+
+        return logRepository.saveLogEntry(logEntry).observe(le ->{
+            Log.i("GVM", "Entry " + le.getID() + " saved");
+            if(logEntry.isNew()) {
                 loadEntries();
             }
         });
@@ -141,5 +156,14 @@ public class GenericViewModel extends WebserviceViewModel {
         logEntry.setEvent(LogEntry.Event.ALERT, latestLogEntry.getStateForAfterEvent());
         logEntry.setComment(reason);
         return saveLogEntry(logEntry);
+    }
+
+    public LiveData<GPSPosition> getGPSPosition(){
+        return liveDataGPSPosition;
+    }
+
+    public LiveData<GPSPosition> getLatestGPSPosition(){
+        gpsRepository.getLatestPosition().add(liveDataGPSPosition);
+        return liveDataGPSPosition;
     }
 }

@@ -24,10 +24,16 @@
     <string name="label.field.date">Date:</string>
     <string name="label.field.status">Status:</string>
     <string name="label.field.latLon">Lat/Lon:</string>
+    <string name="label.field.gps">GPS:</string>
+    <string name="label.field.heading">Heading:</string>
+    <string name="label.field.latitude">Latitude:</string>
+    <string name="label.field.longitude">Longitude:</string>
     <string name="label.excess_duty.CREW_ASLEEP">Cannot rouse sleeping crew member</string>
     <string name="label.excess_duty.CREW_SICK">Cannot rouse ill crew member</string>
     <string name="label.excess_duty.NEAR_DESTINATION">Almost arrived at destination</string>
     <string name="label.excess_duty.OTHER_REASON">Other reason</string>
+
+    <string name="symbol.degree">\u00B0</string>
 
     <string name="log_entry.event.RAISE_ANCHOR">Raised anchor</string>
     <string name="log_entry.event.SET_ANCHOR">Set anchor</string>
