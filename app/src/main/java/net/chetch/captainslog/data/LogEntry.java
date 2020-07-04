@@ -84,8 +84,7 @@ public class LogEntry extends DataObject {
         asEnum("state", State.class);
         asEnum("event", Event.class);
         asString("employee_id");
-        //asDouble("longitude");
-        //asDouble("latitdue");
+        asString("comment");
     }
 
 
@@ -162,5 +161,9 @@ public class LogEntry extends DataObject {
 
     public void setComment(String comment){
         setValue("comment", comment);
+    }
+
+    public String getComment(){
+        return getCasted("comment");
     }
 }

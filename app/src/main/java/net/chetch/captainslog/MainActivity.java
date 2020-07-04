@@ -2,6 +2,7 @@ package net.chetch.captainslog;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
@@ -9,6 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
@@ -23,15 +27,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.chetch.captainslog.data.CaptainsLogRepository;
+import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.CrewRepository;
 import net.chetch.captainslog.data.CrewStats;
+import net.chetch.captainslog.data.LogEntries;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.captainslog.models.MainViewModel;
+import net.chetch.utilities.Logger;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.DataObjectCollection;
 import net.chetch.webservices.Webservice;
 import net.chetch.webservices.WebserviceRepository;
+import net.chetch.webservices.WebserviceViewModel;
 import net.chetch.webservices.employees.Employee;
 import net.chetch.webservices.employees.Employees;
 import net.chetch.webservices.exceptions.WebserviceException;
@@ -57,16 +65,30 @@ public class MainActivity extends GenericActivity {
     ExcessOnDutyDialogFragment excessOnDutyDialog = null;
 
     GPSPosition latestGPS = null;
+    boolean initialLoad = true;
+    boolean openXSDutyAfterLoad = false;
+    boolean activityPaused = false;
 
-    Calendar lastXSDutyWarning = null;
+    Observer dataLoadProgress  = obj -> {
+        WebserviceViewModel.LoadProgress progress = (WebserviceViewModel.LoadProgress)obj;
+        String state = progress.startedLoading ? "Loading" : "Loaded";
+        String progressInfo = state + " " + progress.info.toLowerCase();
+        setProgressInfo(progressInfo);
 
-    Observer onDataLoaded  = data -> {
-        hideProgress();
-        findViewById(R.id.bodyLinearLayout).setVisibility(View.VISIBLE);
-        Log.i("Main","Model data has loaded");
-        findViewById(R.id.btnAddLogEntry).setEnabled(true);
-        startTimer(10);
-        updateOnDuty(true);
+        Log.i("Main", "load observer " + state + " " + progress.info);
+
+        if(initialLoad && progress.dataLoaded instanceof LogEntries){
+            initialLoad = false;
+
+            startTimer(10);
+            updateOnDuty(true);
+            Log.i("Main", "Finished initial load");
+
+            if(openXSDutyAfterLoad && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())){
+                openExcessOnDuty();
+                Log.i("Main", "Open XS on duty dialog after load");
+            }
+        }
     };
 
     @Override
@@ -74,29 +96,9 @@ public class MainActivity extends GenericActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /*this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
-                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN |
-                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);*/
-
-        //this should be moved to application or in preferences or something
-        try {
-            String apiBaseURL = "http://192.168.43.123:8002/api/";
-            NetworkRepository.getInstance().setAPIBaseURL(apiBaseURL);
-        } catch (Exception e) {
-            Log.e("MVM", e.getMessage());
-            return;
-        }
-
-        //set up some initia stuff
+        //set up some initial stuff
         includeOptionsMenu();
-        showProgress();
-        findViewById(R.id.btnAddLogEntry).setEnabled(false);
-        findViewById(R.id.headingLayout).setVisibility(View.GONE);
+        enableDeviceWakeup();
 
         //get the model, load data and add data observers
         model = ViewModelProviders.of(this).get(MainViewModel.class);
@@ -108,12 +110,22 @@ public class MainActivity extends GenericActivity {
         });
 
         //load data
-        model.loadData(onDataLoaded);
+        Intent intent = getIntent();
+        if(intent != null && intent.getBooleanExtra("wakeup", false)){
+            openXSDutyAfterLoad = true;
+            Log.i("Main", "onCreate called from wakeup...");
+        } else {
+            openXSDutyAfterLoad = false;
+        }
+
+        findViewById(R.id.headingLayout).setVisibility(View.GONE);
+        showProgress();
+        model.loadData(dataLoadProgress);
 
         //gps updates
         model.getGPSPosition().observe(this, pos->{
             updateOnDuty(true);
-            Log.i("Main", "lobserving latest gps position ");
+            Log.i("Main", "Observing latest gps position ");
         });
 
         //entries
@@ -132,6 +144,7 @@ public class MainActivity extends GenericActivity {
             fragmentTransaction.commit();
 
             Log.i("Main","First page of entries displayed");
+
             hideProgress();
         });
 
@@ -152,48 +165,68 @@ public class MainActivity extends GenericActivity {
             Log.i("Main", "Displayed crew member on duty");
         });
 
+        model.getXSOnDutyWarning().observe(this, cal->{
+            String s = cal == null ? " null " : Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT) + " (now is " + Utils.formatDate(Calendar.getInstance(), Webservice.DEFAULT_DATE_FORMAT) + ")";
+            Log.i("Main", "Set on duty warning " + s);
+        });
+
         Log.i("Main", "onCreate");
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
-        if (intent.getBooleanExtra("wakeup", false)) {
-            // We were woken up by the alarm manager, but were already running
-
+    protected void onPause() {
+        super.onPause();
+        activityPaused = true;
+        /*Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(cal.getTimeInMillis() + 10000);*/
+        Calendar cal = model.getXSOnDutyWarning().getValue();
+        setWakeUp(cal);
+        if(cal != null){
+            Logger.info("Setting wake up for " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT));
         }
-        Log.i("Main", "onNewIntent");
+        Log.i("Main", "onPause: " + (cal == null ? " no wakeup to set " : Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT)));
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        activityPaused = false;
+        cancelWakeUp();
+        Log.i("Main", "onResume: cancel wakeup");
+    }
 
     @Override
     protected void onTimer(){
 
         CrewMember crewMemberOnDuty = model.getCrewMemberOnDuty().getValue();
-        if(crewMemberOnDuty != null) {
-            Calendar cal = crewMemberOnDuty.getPrevXSOnDutyWarning();
-            boolean requiresWarning = cal != null && (lastXSDutyWarning == null || lastXSDutyWarning.getTimeInMillis() < cal.getTimeInMillis());
+        if(crewMemberOnDuty != null && !activityPaused) {
+            Calendar xsOnDutyWarning = model.getXSOnDutyWarning().getValue();
+            boolean requiresWarning =  xsOnDutyWarning != null && xsOnDutyWarning.getTimeInMillis() < Calendar.getInstance().getTimeInMillis();
+
             if(requiresWarning && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())) {
                 openExcessOnDuty();
-                Log.i("Main", "Now: " + Utils.formatDate(Calendar.getInstance(), Webservice.DEFAULT_DATE_FORMAT) + ", prev warn: " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT));
+                Log.i("Main", "Now: " + Utils.formatDate(Calendar.getInstance(), Webservice.DEFAULT_DATE_FORMAT) + ", Warning set for: " + Utils.formatDate(xsOnDutyWarning, Webservice.DEFAULT_DATE_FORMAT));
             }
         }
         model.getLatestGPSPosition();
         updateOnDuty(true);
     }
 
-    protected void setWakeUp(Calendar wakeUp){
 
-        //create an app wakeup
-        Context ctx = getApplicationContext();
-        Intent intent = new Intent(ctx, this.getClass());
-        intent.putExtra("wakeup", true);
-        PendingIntent pi = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-        mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
-        mgr.set(AlarmManager.RTC_WAKEUP, wakeUp.getTimeInMillis(), pi);
+    @Override
+    public void showProgress() {
+        super.showProgress();
+        enableTouchEvents(false);
+        findViewById(R.id.btnAddLogEntry).setEnabled(false);
+        findViewById(R.id.mainLayout).setAlpha(0.2f);
+    }
 
-        Log.i("Main", "Setting wakeup for " + Utils.formatDate(wakeUp, Webservice.DEFAULT_DATE_FORMAT));
-
+    @Override
+    public void hideProgress() {
+        super.hideProgress();
+        enableTouchEvents(true);
+        findViewById(R.id.btnAddLogEntry).setEnabled(true);
+        findViewById(R.id.mainLayout).setAlpha(1.0f);
     }
 
     public void updateOnDuty(boolean show){
@@ -269,10 +302,6 @@ public class MainActivity extends GenericActivity {
     }
 
     public void openLogEntry(View view){
-        /*Calendar momentLater = Calendar.getInstance();
-        momentLater.setTimeInMillis(momentLater.getTimeInMillis() + 5000);
-        setWakeUp(momentLater);*/
-
         if(logEntryDialog != null){
             logEntryDialog.dismiss();
         }
@@ -284,11 +313,22 @@ public class MainActivity extends GenericActivity {
     }
 
     public void openExcessOnDuty(){
+        Logger.warning("Excess duty dialog opened");
+
         if(excessOnDutyDialog != null){
             excessOnDutyDialog.dismiss();
         }
         excessOnDutyDialog = new ExcessOnDutyDialogFragment();
         excessOnDutyDialog.show(getSupportFragmentManager(), "ExcessOnDutyDialog");
+
+        //play a notification sound
+        try {
+            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+            r.play();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -298,7 +338,7 @@ public class MainActivity extends GenericActivity {
             logEntryDialog.dismiss();
 
             try {
-                model.saveLogEntry(logEntry);
+                model.saveLogEntry(logEntry, dataLoadProgress);
                 showProgress();
             } catch (Exception e){
                 showError(e);
@@ -308,8 +348,7 @@ public class MainActivity extends GenericActivity {
         } else if(dialog instanceof ExcessOnDutyDialogFragment){
             String reason = ((ExcessOnDutyDialogFragment)dialog).reason;
             try {
-                model.addXSDutyReaon(reason);
-                lastXSDutyWarning = Calendar.getInstance();
+                model.addXSDutyReason(reason, dataLoadProgress);
                 showProgress();
                 Log.i("Main", "Saving xs on duty reason");
             } catch (Exception e){
@@ -318,10 +357,10 @@ public class MainActivity extends GenericActivity {
         } else if(dialog instanceof ErrorDialogFragment){
             Throwable t = ((ErrorDialogFragment)dialog).throwable;
             if(t instanceof WebserviceException && !((WebserviceException)t).isServiceAvailable()){
+                model.loadData(dataLoadProgress);
                 showProgress();
-                model.loadData(onDataLoaded);
             }
-            Log.i("Main", "Error");
+            Log.i("Main", "Error dialog onDialogPositiveClick");
         }
     }
 }

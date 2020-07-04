@@ -64,7 +64,7 @@ public class CrewMember extends Employee {
     }
 
     private double getXSOnDutyWarningRatio(double intervalAsRatio, int shiftDirection){
-        double dutyCompletion = getOnDutyCompletion();
+        double dutyCompletion = Math.max(getOnDutyCompletion(), 1);
         double shift = intervalAsRatio / 2;
         double ratio = Math.ceil((dutyCompletion - shift)/intervalAsRatio)*intervalAsRatio + shiftDirection*shift;
         return ratio;
@@ -72,17 +72,11 @@ public class CrewMember extends Employee {
 
     public Calendar getNextXSOnDutyWarning(){
         if(hasOnDutyLimit()){
-            double dutyCompletion = getOnDutyCompletion();
-            if(dutyCompletion > 1){
-                double nextWarning = getXSOnDutyWarningRatio(0.1, 1);
-                Log.i("CrewMember", "duty completion " + dutyCompletion + "gives next warning ratio " + nextWarning);
-
-                Calendar cal = Calendar.getInstance();
-                cal.setTimeInMillis(stats.getStartedDuty().getTimeInMillis() + (long)(onDutyLimit*1000*nextWarning));
-                return cal;
-            } else {
-                return null;
-            }
+            double nextWarning = getXSOnDutyWarningRatio(0.1, 1);
+            Log.i("CrewMember", "duty completion " + getOnDutyCompletion() + " gives next warning ratio " + nextWarning);
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(stats.getStartedDuty().getTimeInMillis() + (long)(onDutyLimit*1000*nextWarning));
+            return cal;
         } else {
             return null;
         }
@@ -90,18 +84,12 @@ public class CrewMember extends Employee {
 
     public Calendar getPrevXSOnDutyWarning(){
         if(hasOnDutyLimit()){
-            double dutyCompletion = getOnDutyCompletion();
-            if(dutyCompletion > 1){
-                double prevWarning = getXSOnDutyWarningRatio(0.1, -1);
-                Log.i("CrewMember", "duty completion " + dutyCompletion + " prev warning ratio " + prevWarning);
-                if(prevWarning < 1)return null;
-
-                Calendar cal = Calendar.getInstance();
-                cal.setTimeInMillis(stats.getStartedDuty().getTimeInMillis() + (long)(onDutyLimit*1000*prevWarning));
-                return cal;
-            } else {
-                return null;
-            }
+            double prevWarning = getXSOnDutyWarningRatio(0.1, -1);
+            Log.i("CrewMember", "duty completion " + getOnDutyCompletion() + " prev warning ratio " + prevWarning);
+            if(prevWarning < 1)return null;
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(stats.getStartedDuty().getTimeInMillis() + (long)(onDutyLimit*1000*prevWarning));
+            return cal;
         } else {
             return null;
         }

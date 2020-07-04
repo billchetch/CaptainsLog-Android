@@ -1,5 +1,8 @@
 package net.chetch.captainslog;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,9 +17,15 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
+import net.chetch.utilities.Utils;
+import net.chetch.webservices.Webservice;
 import net.chetch.webservices.exceptions.WebserviceException;
+
+import java.util.Calendar;
 
 public class GenericActivity  extends AppCompatActivity implements IDialogManager{
 
@@ -36,6 +45,7 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
         }
     };
 
+    //proivde a stub to override
     protected void onTimer(){
 
     }
@@ -128,10 +138,32 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
         if(pb != null){
             pb.setVisibility(visibility);
         }
+
+        TextView tv = findViewById(R.id.progressInfo);
+        if(tv != null){
+            tv.setVisibility(visibility);
+            tv.setText("");
+        }
     }
 
     public void showProgress(){ showProgress(View.VISIBLE);}
     public void hideProgress(){ showProgress(View.INVISIBLE); }
+
+    public void setProgressInfo(String info){
+        TextView tv = findViewById(R.id.progressInfo);
+        if(tv != null){
+            tv.setText(info);
+        }
+    }
+
+    protected void enableTouchEvents(boolean enable){
+        if(enable){
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+        } else {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+        }
+    }
 
 
     public void showWarningDialog(String warning){
@@ -170,5 +202,40 @@ public class GenericActivity  extends AppCompatActivity implements IDialogManage
 
     public void onDialogNegativeClick(GenericDialogFragment dialog){
 
+    }
+
+
+    protected void enableDeviceWakeup(){
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN |
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+    }
+
+    protected void setWakeUp(Calendar wakeUp){
+        //create an app wakeup
+        Context ctx = getApplicationContext();
+        Intent intent = new Intent(ctx, this.getClass());
+        intent.putExtra("wakeup", true);
+        PendingIntent pi = PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+        mgr.cancel(pi);    // Cancel any previously-scheduled wakeups
+
+        if(wakeUp != null) {
+            mgr.set(AlarmManager.RTC_WAKEUP, wakeUp.getTimeInMillis(), pi);
+            Log.i("Main", "Setting wakeup for " + Utils.formatDate(wakeUp, Webservice.DEFAULT_DATE_FORMAT));
+        } else {
+            Log.i("Main", "Cancelling wakeup ");
+        }
+
+    }
+
+    protected void cancelWakeUp(){
+        setWakeUp(null);
     }
 }

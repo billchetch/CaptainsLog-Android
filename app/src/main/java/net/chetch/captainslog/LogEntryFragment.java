@@ -29,8 +29,8 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
     private String getKnownAsAndEvent(){
         int resource = getResourceID("log_entry.event." + logEntry.getEvent(), "string");
         String eventString = getString(resource);
-        String mark = logEntry.requiresRevision() ? " *" : "";
-        return crewMember.getKnownAs() + " " + eventString.toLowerCase() + mark;
+        String mark = logEntry.requiresRevision() ? "* " : "";
+        return mark + crewMember.getKnownAs() + " " + eventString.toLowerCase();
     }
 
     @Override
@@ -55,9 +55,21 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
         String dt = Utils.formatDate(logEntry.getCreated(), "dd/MM/yyyy HH:mm:ss Z");
         tv.setText(dt);
 
-        String latLon = logEntry.getLatitude() + ", " + logEntry.getLongitude();
+        String lat = String.format("%.5f", logEntry.getLatitude());
+        String lon = String.format("%.5f", logEntry.getLongitude());
+        String latLon = lat + "/" + lon;
         tv = contentView.findViewById(R.id.logEntryLatLon);
         tv.setText(latLon);
+
+        String comment = logEntry.getComment();
+        tv = contentView.findViewById(R.id.comment);
+        if(comment != null && comment.length() > 0){
+            tv.setVisibility(View.VISIBLE);
+            tv.setText(comment);
+        } else {
+            tv.setVisibility(View.GONE);
+        }
+
 
         contentView.setOnClickListener(this);
         contentView.setOnLongClickListener(new View.OnLongClickListener(){
@@ -88,7 +100,7 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
     private void markForRevision(){
         logEntry.setRequiresRevision(!logEntry.requiresRevision());
         try {
-            ((MainActivity) getActivity()).model.saveLogEntry(logEntry).observe(entry -> {
+            ((MainActivity) getActivity()).model.saveLogEntry(logEntry, null).observe(entry -> {
                 ((TextView) getView().findViewById(R.id.knownAs)).setText(getKnownAsAndEvent());
                 logEntry.read(entry);
                 Log.i("LEF", "Marked entry ");

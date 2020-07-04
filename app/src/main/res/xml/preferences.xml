@@ -6,8 +6,8 @@
         android:key="api_base_url"
         android:selectAllOnFocus="true"
         android:singleLine="false"
-        android:title="API Base URL"
-        android:summary="Set the API base URL here"
-        android:defaultValue="http://192.168.43.123:8003/api/"/>
+        android:title="Network API Base URL"
+        android:summary="Set the Network API base URL here"
+        android:defaultValue="http://192.168.43.123:8002/api/"/>
 
 </PreferenceScreen>

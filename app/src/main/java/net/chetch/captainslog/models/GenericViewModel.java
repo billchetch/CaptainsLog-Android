@@ -9,12 +9,16 @@ import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.CrewRepository;
+import net.chetch.captainslog.data.CrewStats;
 import net.chetch.captainslog.data.LogEntries;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.webservices.DataStore;
 import net.chetch.webservices.WebserviceViewModel;
 import net.chetch.webservices.gps.GPSPosition;
 import net.chetch.webservices.gps.GPSRepository;
+import net.chetch.webservices.network.Services;
+
+import java.util.Calendar;
 
 public class GenericViewModel extends WebserviceViewModel {
     static public final String CAPTAINS_LOG_SERVICE_NAME = "Captains Log";
@@ -32,6 +36,7 @@ public class GenericViewModel extends WebserviceViewModel {
     MutableLiveData<LogEntries> liveDataEntriesFirstPage = new MutableLiveData<>();
     MutableLiveData<CrewMember> liveDataCrewMemberOnDuty = new MutableLiveData<>();
     MutableLiveData<GPSPosition> liveDataGPSPosition = new MutableLiveData<>();
+    MutableLiveData<Calendar> liveDataXSOnDutyWarning = new MutableLiveData<>();
 
     public GenericViewModel(){
         addRepo(crewRepository);
@@ -57,26 +62,36 @@ public class GenericViewModel extends WebserviceViewModel {
     }
 
     @Override
-    public void loadData(Observer observer){
-
-        super.loadData(data->{
+    public DataStore loadData(Observer observer){
+        DataStore<?> dataStore = super.loadData(observer);
+        dataStore.observe(data ->{
+            notifyLoading(observer, "Crew");
             crewRepository.getCrew().add(liveDataCrew).observe(crew->{
+                notifyLoading(observer, "Profile pics", crew);
                 crewRepository.getProfilePics(crew).observe( bms ->{
-                    loadEntries(observer);
-                    gpsRepository.getLatestPosition(); //get latest gps position
+                    notifyLoading(observer, "GPS", bms);
+                    //get latest gps position
+                    gpsRepository.getLatestPosition().add(liveDataGPSPosition).observe(gps->{
+                        notifyLoaded(observer, gps);
+
+                        //get log entries
+                        loadEntries(observer);
+                    });
                 });
             }); //end getting the crew
-
         }); //end generic data load (service config)
+        return dataStore;
     }
+
 
     protected void loadEntries(){
         loadEntries(null);
     }
 
     protected void loadEntries(Observer observer){
+        notifyLoading(observer, "Crew stats");
         logRepository.getCrewStats().observe(stats->{
-            Log.i("GVM", "Loaded crew stats");
+            notifyLoading(observer, "Log entries", stats);
 
             logRepository.getLogEntriesFirstPage().add(liveDataEntriesFirstPage).observe(entries->{
                 //update all crew with stats
@@ -94,8 +109,7 @@ public class GenericViewModel extends WebserviceViewModel {
                     setLatestLogEntry(entries.get(0));
                 }
 
-                Log.i("GVM", "loadData: Entries loaded");
-                notifyObserver(observer, entries);
+                notifyLoaded(observer, entries);
             });
         });
 
@@ -114,8 +128,11 @@ public class GenericViewModel extends WebserviceViewModel {
     }
 
     private void setLatestLogEntry(LogEntry logEntry){
-        latestLogEntry = logEntry;
+
         CrewMember cm = eidMap.get(logEntry.getEmployeeID());
+        Calendar xsOnDutyWarning = cm.getNextXSOnDutyWarning();
+        liveDataXSOnDutyWarning.setValue(xsOnDutyWarning);
+        latestLogEntry = logEntry;
         crewMemberOnDuty = cm;
         liveDataCrewMemberOnDuty.setValue(crewMemberOnDuty);
         Log.i("GVM", "Set lates entry");
@@ -129,7 +146,7 @@ public class GenericViewModel extends WebserviceViewModel {
         return eidMap.containsKey(employeeID) ? eidMap.get(employeeID) : null;
     }
 
-    public DataStore<LogEntry> saveLogEntry(LogEntry logEntry) throws Exception{
+    public DataStore<LogEntry> saveLogEntry(LogEntry logEntry, Observer observer) throws Exception{
         if(logEntry.isNew()){ //is a new entry we
             GPSPosition pos = getGPSPosition().getValue();
             if(pos == null){
@@ -141,12 +158,13 @@ public class GenericViewModel extends WebserviceViewModel {
         return logRepository.saveLogEntry(logEntry).observe(le ->{
             Log.i("GVM", "Entry " + le.getID() + " saved");
             if(logEntry.isNew()) {
-                loadEntries();
+                loadProgress.reset();
+                loadEntries(observer);
             }
         });
     }
 
-    public DataStore<LogEntry> addXSDutyReaon(String reason) throws Exception{
+    public DataStore<LogEntry> addXSDutyReason(String reason, Observer observer) throws Exception{
         LogEntry latestLogEntry = getLatestLogEntry();
         if(latestLogEntry == null){
             throw new Exception("No previous log entry");
@@ -155,7 +173,9 @@ public class GenericViewModel extends WebserviceViewModel {
         logEntry.setEmployeeID(latestLogEntry.getEmployeeID());
         logEntry.setEvent(LogEntry.Event.ALERT, latestLogEntry.getStateForAfterEvent());
         logEntry.setComment(reason);
-        return saveLogEntry(logEntry);
+
+        liveDataXSOnDutyWarning.setValue(null);
+        return saveLogEntry(logEntry, observer);
     }
 
     public LiveData<GPSPosition> getGPSPosition(){
@@ -165,5 +185,9 @@ public class GenericViewModel extends WebserviceViewModel {
     public LiveData<GPSPosition> getLatestGPSPosition(){
         gpsRepository.getLatestPosition().add(liveDataGPSPosition);
         return liveDataGPSPosition;
+    }
+
+    public LiveData<Calendar> getXSOnDutyWarning(){
+        return liveDataXSOnDutyWarning;
     }
 }

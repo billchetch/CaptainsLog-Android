@@ -7,6 +7,6 @@ public class MainViewModel extends GenericViewModel {
     public MainViewModel(){
         super();
 
-        CrewMember.onDutyLimit = 60*20; //in secos
+        CrewMember.onDutyLimit = 60*10; //60*2; //in secos
     }
 }

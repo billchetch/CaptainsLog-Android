@@ -11,7 +11,7 @@ import android.widget.TextView;
 import net.chetch.utilities.Logger;
 
 
-public class AboutDialogFragment extends AppCompatDialogFragment {
+public class AboutDialogFragment extends GenericDialogFragment {
 
     public AboutDialogFragment(){
 
