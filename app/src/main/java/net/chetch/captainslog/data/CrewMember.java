@@ -19,7 +19,7 @@ public class CrewMember extends Employee {
         if(hasOnDutyLimit() && isOnDuty()){
             Calendar now = Calendar.getInstance();
             long elapsed = now.getTimeInMillis() - stats.getStartedDuty().getTimeInMillis();
-            return (double)(elapsed) / (double)(onDutyLimit*1000);
+            return Math.max(0, (double)(elapsed) / (double)(onDutyLimit*1000));
         } else {
             return 0;
         }
