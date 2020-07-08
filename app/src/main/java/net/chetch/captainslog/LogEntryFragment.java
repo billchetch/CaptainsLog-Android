@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import net.chetch.appframework.GenericActivity;
 import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;

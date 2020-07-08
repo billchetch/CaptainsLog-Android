@@ -117,7 +117,7 @@ public class LogEntry extends DataObject {
         return getCasted("event");
     }
 
-    public String getEmployeeID(){ return getValue("employee_id").toString(); }
+    public String getEmployeeID(){ return getCasted("employee_id"); }
 
     public Double getLatitude(){ return getCasted("latitude"); }
     public void setLatitude(double l){ setValue("latitude", l); }

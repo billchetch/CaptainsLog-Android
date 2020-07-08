@@ -3,21 +3,17 @@
     <string name="app_name">Log Nahkoda</string>
 
     <string name="dialog.log_entry.title">Tambahkan Data</string>
-    <string name="dialog.warning.title">Peringatan</string>
-    <string name="dialog.confirmation.title">Konfirmasi</string>
     <string name="dialog.excess_duty.title">Bertugas Terlalu Lama</string>
     <string name="dialog.excess_duty.text">Anda telah bertugas terlalu lama. Harap berikan alasan.</string>
     <string name="dialog.confirmation.markforrevision_text">Mau kasih tanda untuk revisi nanti?</string>
 
-    <string name="menus.options_menu.help">Bantu</string>
-    <string name="menus.options_menu.about">Soal</string>
-    <string name="menus.options_menu.settings">Settings</string>
+    <string name="dialog.warning.choose_crew">Tolong pilih kru</string>
+    <string name="dialog.warning.choose_event">Tolong pilih terjadian</string>
+    <string name="dialog.warning.add_comment">Tolong kasih keterangan</string>
+    <string name="dialog.warning.choose_reason">Tolong pilih alasan</string>
 
     <string name="button.change">Berubah</string>
-    <string name="button.ok">OK</string>
-    <string name="button.cancel">Batal</string>
-    <string name="button.confirm">Betul</string>
-    <string name="label.field.date">Tanggal:</string>
+    <string name="label.field.date">Tgl:</string>
     <string name="label.field.status">Status:</string>
     <string name="label.field.heading">Arah:</string>
     <string name="label.field.latLon">Lat/Lon:</string>
@@ -34,4 +30,10 @@
 
     <string name="log_entry.state.MOVING">Sedang bergerak</string>
     <string name="log_entry.state.IDLE">berhenti</string>
+
+    <string name="button.log_entry.event.RAISE_ANCHOR">Naikin jangkar</string>
+    <string name="button.log_entry.event.SET_ANCHOR">Pasang anchor</string>
+    <string name="button.log_entry.event.DUTY_CHANGE">Ganti pertugas</string>
+    <string name="button.log_entry.event.COMMENT">Kasih keterangan</string>
+    <string name="button.log_entry.event.ALERT">Alert</string>
 </resources>

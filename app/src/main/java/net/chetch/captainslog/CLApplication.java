@@ -10,30 +10,32 @@ import android.net.wifi.WifiManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import net.chetch.appframework.ChetchApplication;
+import net.chetch.captainslog.data.CrewMember;
 import net.chetch.utilities.Logger;
 import net.chetch.webservices.network.NetworkRepository;
 
-public class CLApplication extends Application {
-
-    static public final String LOG_FILE = "bbcl.log";
+public class CLApplication extends ChetchApplication {
 
     @Override
     public void onCreate() {
+        LOG_FILE = "cllog";
+
         super.onCreate();
-        //initialise logger
-        Logger.init(this, LOG_FILE);
-        //Logger.clear();
-        Logger.info("Application started");
 
-        //set default uce handler
-        Thread.setDefaultUncaughtExceptionHandler(new UCEHandler(this, LOG_FILE));
-
-        //set default prefs and API Base URL
+        //set default prefs so application can function
         PreferenceManager.setDefaultValues(this, R.xml.preferences, true);
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String apiBaseURL = sharedPref.getString("api_base_url", null);
         try{
+            String apiBaseURL = sharedPref.getString("api_base_url", null);
             NetworkRepository.getInstance().setAPIBaseURL(apiBaseURL);
+
+            String dutyLimit = sharedPref.getString("on_duty_limit", "240");
+            CrewMember.onDutyLimit = 60 * Integer.parseInt(dutyLimit);
+
+            String pollTime = sharedPref.getString("poll_server_time", "10");
+            MainActivity.pollServerTime = Integer.parseInt(pollTime);
+
         } catch (Exception e){
             Log.e("Application", e.getMessage());
         }
@@ -47,6 +49,5 @@ public class CLApplication extends Application {
                 Logger.warning("Wifi network state change");
             }
         }, intentFilter);
-
     }
 }

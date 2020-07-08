@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+        android:theme="@style/AppTheme"
         android:name=".CLApplication"
         >
 
@@ -26,6 +26,14 @@
         </activity>
 
         <activity android:name=".SettingsActivity"></activity>
+
+        <activity
+            android:name="net.chetch.appframework.UCEActivity">
+            <intent-filter>
+                <action android:name="net.chetch.captainslog.CLApplication.UNCAUGHT_EXCEPTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
     </application>
 

@@ -11,7 +11,7 @@ import net.chetch.webservices.WebserviceRepository;
 import net.chetch.webservices.employees.Employees;
 
 public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogService> {
-    static public int ENTRIES_PAGE_SIZE = 250;
+    static public int ENTRIES_PAGE_SIZE = 50;
 
     static private CaptainsLogRepository instance = null;
     static public CaptainsLogRepository getInstance(){

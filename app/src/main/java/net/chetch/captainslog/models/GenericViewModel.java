@@ -21,9 +21,6 @@ import net.chetch.webservices.network.Services;
 import java.util.Calendar;
 
 public class GenericViewModel extends WebserviceViewModel {
-    static public final String CAPTAINS_LOG_SERVICE_NAME = "Captains Log";
-    static public final String EMPLOYEES_SERVICE_NAME = "Employees";
-
     CaptainsLogRepository logRepository = CaptainsLogRepository.getInstance();
     CrewRepository crewRepository = CrewRepository.getInstance();
     GPSRepository gpsRepository = GPSRepository.getInstance();

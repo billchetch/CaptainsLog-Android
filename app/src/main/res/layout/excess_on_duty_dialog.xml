@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/dialog_background_error"
+    style="@style/AppFramework.Dark.NoActionBar.Dialog.Layout.Error"
+    android:theme="@style/AppFramework.Dark.NoActionBar.Dialog.Error"
     android:padding="32dp">
 
     <LinearLayout

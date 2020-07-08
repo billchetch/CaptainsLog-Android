@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import net.chetch.appframework.GenericDialogFragment;
 import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.webservices.employees.Employee;
@@ -22,11 +23,7 @@ public class LogEntryConfirmationDialogFragment extends GenericDialogFragment{
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        // Get the layout inflater
-        LayoutInflater inflater = getActivity().getLayoutInflater();
-
-        //get the content view
-        contentView = inflater.inflate(R.layout.log_entry_confirmation_dialog, null);
+        inflateContentView(R.layout.log_entry_confirmation_dialog);
 
         ImageView iv = contentView.findViewById(R.id.crewProfileImage);
         iv.setImageBitmap(crewMember.profileImage);

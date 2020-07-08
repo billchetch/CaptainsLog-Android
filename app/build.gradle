@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "net.chetch.captainslog"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -34,6 +34,8 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
     implementation 'android.arch.lifecycle:extensions:1.1.0'
     implementation 'android.arch.lifecycle:viewmodel:1.1.0'
-    implementation project(':utilities')
     implementation project(':webservices')
+    implementation project(':utilities')
+    implementation project(':appframework')
+    implementation project(':appresources')
 }

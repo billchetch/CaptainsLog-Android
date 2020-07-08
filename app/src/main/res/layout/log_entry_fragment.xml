@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:paddingBottom="16dp"
+    tools:layout_editor_absoluteY="25dp">
 
     <ImageView
         android:id="@+id/crewProfileImage"
@@ -21,7 +22,6 @@
         android:id="@+id/eventIcon"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_marginTop="2dp"
         android:padding="4dp"
         android:scaleType="fitCenter"
         app:layout_constraintEnd_toEndOf="parent"
@@ -35,7 +35,7 @@
         android:layout_marginStart="12dp"
         android:layout_marginTop="2dp"
         android:textColor="@color/lightGrey"
-        android:textSize="24sp"
+        android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/eventIcon"
         app:layout_constraintStart_toEndOf="@+id/crewProfileImage"

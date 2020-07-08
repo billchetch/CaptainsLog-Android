@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import net.chetch.appframework.GenericDialogFragment;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.webservices.employees.Employee;
 
@@ -20,11 +21,7 @@ public class ExcessOnDutyDialogFragment extends GenericDialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        // Get the layout inflater
-        LayoutInflater inflater = getActivity().getLayoutInflater();
-
-        //get the content view
-        contentView = inflater.inflate(R.layout.excess_on_duty_dialog, null);
+        inflateContentView(R.layout.excess_on_duty_dialog);
 
         RadioGroup rg = contentView.findViewById(R.id.reasons);
         TextView tv = contentView.findViewById(R.id.otherReason);
@@ -87,11 +84,10 @@ public class ExcessOnDutyDialogFragment extends GenericDialogFragment {
             return;
         }
 
-        String comment = null;
         if(selectedReason == LogEntry.XSDutyReason.OTHER_REASON){
             TextView tv = contentView.findViewById(R.id.otherReason);
             reason = tv.getText() == null ? null : tv.getText().toString().trim();
-            if(comment == null || comment.length() == 0) {
+            if(reason == null || reason.length() == 0) {
                 dialogManager.showWarningDialog(getString(R.string.dialog_warning_add_comment));
                 return;
             }

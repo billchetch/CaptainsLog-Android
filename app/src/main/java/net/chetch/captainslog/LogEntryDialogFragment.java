@@ -1,6 +1,7 @@
 package net.chetch.captainslog;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -23,6 +24,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import net.chetch.appframework.GenericDialogFragment;
 import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.LogEntry;
@@ -85,11 +87,7 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        // Get the layout inflater
-        LayoutInflater inflater = getActivity().getLayoutInflater();
-
-        //get the content view
-        contentView = inflater.inflate(R.layout.log_entry_dialog, null);
+        inflateContentView(R.layout.log_entry_dialog);
 
         //add event buttons
         LogEntry.Event[] allEvents = LogEntry.Event.values();
@@ -116,7 +114,7 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
 
         //hide other sections
         contentView.findViewById(R.id.logEntryDialogCrewListContainer).setVisibility(View.GONE);
-        contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
+        contentView.findViewById(R.id.logEntryComment).setVisibility(View.GONE);
 
 
         //set the close button
@@ -171,23 +169,24 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
                         populateCrewView(crew.active());
                     }
                     contentView.findViewById(R.id.logEntryDialogCrewListContainer).setVisibility(View.VISIBLE);
-                    contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
+                    contentView.findViewById(R.id.logEntryComment).clearFocus();
+                    contentView.findViewById(R.id.logEntryComment).setVisibility(View.GONE);
                     logEntry.setEmployeeID(null); //set to null as it needs to be chosen later
                     break;
 
                 default:
                     logEntry.setEmployeeID(latestLogEntry == null ? null : latestLogEntry.getEmployeeID());
                     if(event == LogEntry.Event.COMMENT){
-                        contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.VISIBLE);
+                        contentView.findViewById(R.id.logEntryComment).setVisibility(View.VISIBLE);
                         contentView.findViewById(R.id.logEntryComment).requestFocus();
                     } else {
-                        contentView.findViewById(R.id.logEntryCommentContainer).setVisibility(View.GONE);
+                        contentView.findViewById(R.id.logEntryComment).setVisibility(View.GONE);
                     }
                     contentView.findViewById(R.id.logEntryDialogCrewListContainer).setVisibility(View.GONE);
                     break;
             }
 
-            int resource = getResourceID("log_entry.event." + event.toString(), "string");
+            int resource = getResourceID("button.log_entry.event." + event.toString(), "string");
             String eventString = getString(resource);
             ((TextView)contentView.findViewById(R.id.logEntryEventSelected)).setText(eventString.toUpperCase());
 
@@ -204,8 +203,6 @@ public class LogEntryDialogFragment extends GenericDialogFragment implements Vie
             }
         }
     }
-
-
 
     public void openLogEntryConfirmation(){
         if(logEntry.getEvent() == null || logEntry.getState() == null){

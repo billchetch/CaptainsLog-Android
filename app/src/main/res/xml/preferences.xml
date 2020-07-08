@@ -9,5 +9,22 @@
         android:title="Network API Base URL"
         android:summary="Set the Network API base URL here"
         android:defaultValue="http://192.168.43.123:8002/api/"/>
+    <EditTextPreference
+        android:defaultValue="240"
+        android:key="on_duty_limit"
+        android:numeric="integer|signed"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="Maximum time a single person can steer (in minutes)"
+        android:title="On Duty Limit" />
+
+    <EditTextPreference
+        android:defaultValue="10"
+        android:key="poll_server_time"
+        android:numeric="integer|signed"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="How often to poll server for GPS and other info (in seconds)"
+        android:title="Poll Server Time" />
 
 </PreferenceScreen>

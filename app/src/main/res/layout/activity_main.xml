@@ -5,21 +5,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
     tools:context=".MainActivity">
 
     <ProgressBar
         android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyle"
         android:layout_width="128dp"
         android:layout_height="128dp"
-        android:layout_marginBottom="52dp"
+        android:layout_marginBottom="64dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/mainLayout"
-        app:layout_constraintStart_toStartOf="@+id/mainLayout"
-        app:layout_constraintTop_toTopOf="@+id/mainLayout" />
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/mainLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/actionbar" />
 
     <TextView
         android:id="@+id/progressInfo"
@@ -35,205 +34,184 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/progressBar" />
 
-    <LinearLayout
+    <include
+        android:id="@+id/actionbar"
+        layout="@layout/actionbar"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/actionbar.height"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <android.support.constraint.ConstraintLayout
         android:id="@+id/mainLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:visibility="visible">
+        android:layout_height="0dp"
+        android:paddingBottom="16dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/actionbar">
 
-        <include
-            android:id="@+id/main_toolbar"
-            layout="@layout/main_toolbar"
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/profilePicCrewOnDuty"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/image_background_rect"
+            android:cropToPadding="true"
+            android:padding="3dp"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/crewOnDutyKnownAs"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.4" />
+            android:layout_marginStart="12dp"
+            android:textColor="@color/white"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/bodyLinearLayout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:divider="@drawable/divider_for_vertical_linear_layout"
-            android:orientation="vertical"
-            android:visibility="visible">
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/headingLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
+            app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs">
 
-            <android.support.constraint.ConstraintLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/lblHeading"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="16dp"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:paddingTop="24dp">
+                android:text="@string/label.field.heading"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
+                app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs" />
 
-                <ImageView
-                    android:id="@+id/profilePicCrewOnDuty"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/image_background_rect"
-                    android:cropToPadding="true"
-                    android:padding="3dp"
-                    android:scaleType="centerCrop"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <TextView
-                    android:id="@+id/crewOnDutyKnownAs"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:textColor="@color/white"
-                    android:textSize="34sp"
-                    android:textStyle="bold"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <android.support.constraint.ConstraintLayout
-                    android:id="@+id/headingLayout"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
-                    app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs">
-
-                    <TextView
-                        android:id="@+id/lblHeading"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/label.field.heading"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
-                        app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs" />
-
-                    <ImageView
-                        android:id="@+id/direction"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        app:layout_constraintStart_toEndOf="@+id/lblHeading"
-                        app:srcCompat="@drawable/ic_round_navigation_24px" />
-
-                    <TextView
-                        android:id="@+id/heading"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="32dp"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toEndOf="@+id/lblHeading"
-                        app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs" />
-                </android.support.constraint.ConstraintLayout>
-
-                <TextView
-                    android:id="@+id/lblGPS"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="@string/label.field.gps"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
-                    app:layout_constraintTop_toBottomOf="@+id/headingLayout" />
-
-                <TextView
-                    android:id="@+id/gps"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/lblGPS"
-                    app:layout_constraintTop_toBottomOf="@+id/headingLayout" />
-
-                <ImageView
-                    android:id="@+id/progressOnDutyBar"
-                    android:layout_width="100dp"
-                    android:layout_height="40dp"
-                    android:background="@color/age5"
-                    android:visibility="invisible"
-                    app:layout_constraintStart_toStartOf="@+id/progressOnDutyBorder"
-                    app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
-
-                <ImageView
-                    android:id="@+id/progressOnDutyBorder"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginTop="22dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/profilePicCrewOnDuty"
-                    app:srcCompat="@drawable/rect_border_only_lightgrey" />
-
-                <TextView
-                    android:id="@+id/progressOnDutyInfo"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="6dp"
-                    android:text="3h 24m / 79%"
-                    android:textAlignment="center"
-                    android:textColor="@color/lightGrey"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:visibility="invisible"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
-
-            </android.support.constraint.ConstraintLayout>
-
-            <android.support.constraint.ConstraintLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/direction"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:addStatesFromChildren="true"
-                android:paddingBottom="8dp"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:paddingTop="0dp"
+                android:layout_marginStart="4dp"
+                app:layout_constraintStart_toEndOf="@+id/lblHeading"
+                app:srcCompat="@drawable/ic_round_navigation_24px" />
+
+            <TextView
+                android:id="@+id/heading"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:textColor="@color/white"
+                android:textSize="16sp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
+                app:layout_constraintStart_toEndOf="@+id/lblHeading"
+                app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs" />
+        </android.support.constraint.ConstraintLayout>
 
-                <Button
-                    android:id="@+id/btnAddLogEntry"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:onClick="openLogEntry"
-                    android:paddingLeft="64dp"
-                    android:paddingRight="64dp"
-                    android:text="@string/button.change"
-                    android:textSize="24sp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/lblGPS"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/label.field.gps"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
+            app:layout_constraintTop_toBottomOf="@+id/headingLayout" />
 
-            </android.support.constraint.ConstraintLayout>
+        <TextView
+            android:id="@+id/gps"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/lblGPS"
+            app:layout_constraintTop_toBottomOf="@+id/headingLayout" />
 
-            <ScrollView
-                android:id="@+id/logView"
+        <ImageView
+            android:id="@+id/progressOnDutyBar"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:background="@color/age5"
+            android:visibility="invisible"
+            app:layout_constraintStart_toStartOf="@+id/progressOnDutyBorder"
+            app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
+
+        <ImageView
+            android:id="@+id/progressOnDutyBorder"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profilePicCrewOnDuty"
+            app:srcCompat="@drawable/rect_border_only_lightgrey" />
+
+        <TextView
+            android:id="@+id/progressOnDutyInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="6dp"
+            android:text="3h 24m / 79%"
+            android:textAlignment="center"
+            android:textColor="@color/lightGrey"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
+
+        <Button
+            android:id="@+id/btnAddLogEntry"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:onClick="openLogEntry"
+            android:paddingLeft="64dp"
+            android:paddingRight="64dp"
+            android:text="@string/button.change"
+            android:textSize="24sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/progressOnDutyInfo" />
+
+        <ScrollView
+            android:id="@+id/logView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnAddLogEntry">
+
+            <LinearLayout
+                android:id="@+id/logLinearLayout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:orientation="vertical" />
+        </ScrollView>
 
-                <LinearLayout
-                    android:id="@+id/logLinearLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-            </ScrollView>
-
-        </LinearLayout>
-
-
-    </LinearLayout>
+    </android.support.constraint.ConstraintLayout>
 
 </android.support.constraint.ConstraintLayout>

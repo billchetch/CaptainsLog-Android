@@ -26,6 +26,10 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import net.chetch.appframework.ErrorDialogFragment;
+import net.chetch.appframework.GenericActivity;
+import net.chetch.appframework.GenericDialogFragment;
+import net.chetch.appframework.IDialogManager;
 import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.CrewMember;
@@ -59,7 +63,9 @@ import java.util.concurrent.TimeUnit;
 
 import static android.view.View.GONE;
 
-public class MainActivity extends GenericActivity {
+public class MainActivity extends GenericActivity implements IDialogManager{
+    static public int pollServerTime = 10; //in seconds
+
     MainViewModel model;
     LogEntryDialogFragment logEntryDialog = null;
     ExcessOnDutyDialogFragment excessOnDutyDialog = null;
@@ -80,7 +86,7 @@ public class MainActivity extends GenericActivity {
         if(initialLoad && progress.dataLoaded instanceof LogEntries){
             initialLoad = false;
 
-            startTimer(10);
+            startTimer(pollServerTime);
             updateOnDuty(true);
             Log.i("Main", "Finished initial load");
 
@@ -97,7 +103,7 @@ public class MainActivity extends GenericActivity {
         setContentView(R.layout.activity_main);
 
         //set up some initial stuff
-        includeOptionsMenu();
+        includeActionBar(SettingsActivity.class);
         enableDeviceWakeup();
 
         //get the model, load data and add data observers
@@ -119,13 +125,13 @@ public class MainActivity extends GenericActivity {
         }
 
         findViewById(R.id.headingLayout).setVisibility(View.GONE);
+
         showProgress();
         model.loadData(dataLoadProgress);
 
         //gps updates
         model.getGPSPosition().observe(this, pos->{
             updateOnDuty(true);
-            Log.i("Main", "Observing latest gps position ");
         });
 
         //entries
@@ -143,7 +149,7 @@ public class MainActivity extends GenericActivity {
             }
             fragmentTransaction.commit();
 
-            Log.i("Main","First page of entries displayed");
+            Log.i("Main","First page of entries displayed " + entries.size() + " entries");
 
             hideProgress();
         });
@@ -170,7 +176,7 @@ public class MainActivity extends GenericActivity {
             Log.i("Main", "Set on duty warning " + s);
         });
 
-        Log.i("Main", "onCreate");
+        Log.i("Main", "onCreate... on duty limit set to " + CrewMember.onDutyLimit + " secs");
     }
 
     @Override
@@ -196,7 +202,7 @@ public class MainActivity extends GenericActivity {
     }
 
     @Override
-    protected void onTimer(){
+    protected int onTimer(){
 
         CrewMember crewMemberOnDuty = model.getCrewMemberOnDuty().getValue();
         if(crewMemberOnDuty != null && !activityPaused) {
@@ -210,6 +216,8 @@ public class MainActivity extends GenericActivity {
         }
         model.getLatestGPSPosition();
         updateOnDuty(true);
+
+        return super.onTimer();
     }
 
 

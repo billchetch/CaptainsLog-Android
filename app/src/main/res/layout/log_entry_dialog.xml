@@ -2,22 +2,22 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/AppFramework.Dark.NoActionBar.Dialog.Layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/dialog_background">
+    android:padding="0dp"
+    android:theme="@style/AppFramework.Dark.NoActionBar.Dialog">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingBottom="4dp"
-        android:paddingTop="4dp">
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/dialogTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+            android:layout_margin="14dp"
             android:text="@string/dialog.log_entry.title"
             android:textAlignment="viewStart"
             android:textColor="@color/white"
@@ -28,7 +28,7 @@
             android:id="@+id/entryEvents"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_margin="4dp"
             android:orientation="horizontal"
             android:paddingBottom="4dp"
             android:paddingTop="4dp"
@@ -58,6 +58,7 @@
                 android:id="@+id/SET_ANCHOR"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
+                android:layout_marginBottom="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/image_background_rect"
                 android:padding="1dp"
@@ -108,53 +109,61 @@
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="visible" />
 
-        <ScrollView
-            android:id="@+id/logEntryDialogCrewListContainer"
-            android:layout_width="match_parent"
-            android:layout_height="420dp"
-            android:layout_weight="1"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/logEntryDialogCrewList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                android:orientation="vertical"
-                android:showDividers="middle"></LinearLayout>
-        </ScrollView>
 
         <android.support.constraint.ConstraintLayout
-            android:id="@+id/logEntryCommentContainer"
+            android:id="@+id/logEntryBody"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="0.1"
-            android:padding="16dp">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1">
 
             <EditText
                 android:id="@+id/logEntryComment"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="14dp"
+                android:layout_marginStart="14dp"
                 android:ems="10"
                 android:inputType="textMultiLine"
                 android:singleLine="false"
                 android:textColor="@color/white"
                 android:textSize="24sp"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <ScrollView
+                android:id="@+id/logEntryDialogCrewListContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:visibility="visible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:id="@+id/logEntryDialogCrewList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    android:orientation="vertical"
+                    android:showDividers="middle"></LinearLayout>
+            </ScrollView>
         </android.support.constraint.ConstraintLayout>
 
         <LinearLayout
             android:id="@+id/buttons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal">
+            android:layout_margin="14dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/logEntryBody">
 
             <Space
                 android:layout_width="wrap_content"
