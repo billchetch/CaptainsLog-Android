@@ -114,7 +114,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         logEntriesRecyclerView.setHasFixedSize(true);
-        logEntriesRecyclerView.setLayoutManager(new LinearLayoutManager(this););
+        logEntriesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // specify an adapter
         logEntriesAdapter = new LogEntriesAdapter(this);
