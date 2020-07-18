@@ -1,6 +1,7 @@
 package net.chetch.captainslog;
 
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,23 +14,37 @@ import android.widget.TextView;
 
 import net.chetch.appframework.GenericActivity;
 import net.chetch.captainslog.data.CaptainsLogRepository;
+import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
 import net.chetch.webservices.employees.Employee;
 
+//NOTE: this class is a bit strange as it was originally for a fragment and then adapted
+//for use with RecyclerView.Adapter class LogEntriesAdapter, specifically so as to work with the ViewHolder class
+
 public class LogEntryFragment extends Fragment implements View.OnClickListener {
 
     public LogEntry logEntry;
-    public Employee crewMember;
+    public CrewMember crewMember;
+    public MainActivity mainActivity;
+    public boolean populateOnCreate = true;
+    private View contentView;
+
+    private MainActivity getMainActivity(){
+        if(mainActivity == null){
+            mainActivity = ((MainActivity) getActivity());
+        }
+        return mainActivity;
+    }
 
     protected int getResourceID(String resourceName, String resourceType){
-        return getResources().getIdentifier(resourceName,resourceType, getContext().getPackageName());
+        return getMainActivity().getResources().getIdentifier(resourceName,resourceType, getMainActivity().getBaseContext().getPackageName());
     }
 
 
     private String getKnownAsAndEvent(){
         int resource = getResourceID("log_entry.event." + logEntry.getEvent(), "string");
-        String eventString = getString(resource);
+        String eventString = getMainActivity().getString(resource);
         String mark = logEntry.requiresRevision() ? "* " : "";
         return mark + crewMember.getKnownAs() + " " + eventString.toLowerCase();
     }
@@ -39,8 +54,15 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
                              Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
-        View contentView = inflater.inflate(R.layout.log_entry_fragment, container, false);
+        contentView = inflater.inflate(R.layout.log_entry_fragment, container, false);
+        if(populateOnCreate){
+            populateContent();
+        }
 
+        return contentView;
+    }
+
+    public void populateContent(){
         ImageView iv = contentView.findViewById(R.id.crewProfileImage);
         iv.setImageBitmap(crewMember.profileImage);
 
@@ -87,27 +109,26 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
                         }
                     };
 
-                    String message = getString(R.string.dialog_confirmation_markforrevision_text);
-                    ((GenericActivity) getActivity()).showConfirmationDialog(message, listener);
+                    String message = getMainActivity().getString(R.string.dialog_confirmation_markforrevision_text);
+                    getMainActivity().showConfirmationDialog(message, listener);
                 }
                 return false;
             }
 
         });
-
-        return contentView;
     }
 
     private void markForRevision(){
         logEntry.setRequiresRevision(!logEntry.requiresRevision());
         try {
-            ((MainActivity) getActivity()).model.saveLogEntry(logEntry, null).observe(entry -> {
-                ((TextView) getView().findViewById(R.id.knownAs)).setText(getKnownAsAndEvent());
+            getMainActivity().model.saveLogEntry(logEntry, null).observe(entry -> {
+                TextView tv = contentView.findViewById(R.id.knownAs);
+                tv.setText(getKnownAsAndEvent());
                 logEntry.read(entry);
                 Log.i("LEF", "Marked entry ");
             });
         } catch (Exception e){
-            ((MainActivity) getActivity()).showError(e);
+           getMainActivity().showError(e);
         }
     }
 

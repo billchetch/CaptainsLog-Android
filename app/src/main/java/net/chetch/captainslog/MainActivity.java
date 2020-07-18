@@ -19,6 +19,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +71,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
     MainViewModel model;
     LogEntryDialogFragment logEntryDialog = null;
     ExcessOnDutyDialogFragment excessOnDutyDialog = null;
+    LogEntriesAdapter logEntriesAdapter;
 
     GPSPosition latestGPS = null;
     boolean initialLoad = true;
@@ -102,9 +105,21 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //set up some initial stuff
+        //set up some generic stuff
         includeActionBar(SettingsActivity.class);
         enableDeviceWakeup();
+
+        RecyclerView logEntriesRecyclerView = findViewById(R.id.logRecyclerView);
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        logEntriesRecyclerView.setHasFixedSize(true);
+        logEntriesRecyclerView.setLayoutManager(new LinearLayoutManager(this););
+
+        // specify an adapter
+        logEntriesAdapter = new LogEntriesAdapter(this);
+        logEntriesRecyclerView.setAdapter(logEntriesAdapter);
+
 
         //get the model, load data and add data observers
         model = ViewModelProviders.of(this).get(MainViewModel.class);
@@ -137,18 +152,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         //entries
         model.getEntriesFirstPage().observe(this, entries->{
 
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            ((ViewGroup)findViewById(R.id.logLinearLayout)).removeAllViews();
-
-            for(LogEntry entry : entries){
-                LogEntryFragment lef = new LogEntryFragment();
-                lef.logEntry = entry;
-                lef.crewMember = model.getCrewMember(entry.getEmployeeID());
-                fragmentTransaction.add(R.id.logLinearLayout, lef);
-            }
-            fragmentTransaction.commit();
-
+            logEntriesAdapter.setDataset(entries);
             Log.i("Main","First page of entries displayed " + entries.size() + " entries");
 
             hideProgress();
