@@ -285,7 +285,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                 //bearing + speed
                 if(pos != null && pos.getBearing() != null){
                     ImageView dir = findViewById(R.id.direction);
-                    dir.setRotation(pos.getBearing());
+                    dir.setRotation(pos.getBearing().floatValue());
 
                     TextView tvHeading = findViewById(R.id.heading);
                     String heading = pos.getBearing() +  getString(R.string.symbol_degree) +  " @ " + String.format("%.1f", pos.getSpeed(GPSPosition.SpeedUnits.NPH)) + "kts";

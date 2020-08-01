@@ -78,8 +78,8 @@ public class LogEntry extends DataObject {
 
 
     @Override
-    public void init() {
-        super.init();
+    public void initialise() {
+        super.initialise();
 
         asEnum("state", State.class);
         asEnum("event", Event.class);

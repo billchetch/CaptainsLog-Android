@@ -7,8 +7,8 @@ import java.util.Calendar;
 public class CrewMemberStats extends DataObject {
 
     @Override
-    public void init() {
-        super.init();
+    public void initialise() {
+        super.initialise();
 
         asEnum("last_state", LogEntry.State.class);
         asEnum("last_event", LogEntry.Event.class);
