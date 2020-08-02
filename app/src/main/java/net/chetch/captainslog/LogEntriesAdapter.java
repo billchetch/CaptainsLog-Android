@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.TextView;
 
 import net.chetch.captainslog.data.Crew;
@@ -27,6 +28,7 @@ public class LogEntriesAdapter extends RecyclerView.Adapter<LogEntriesAdapter.Vi
 
     private MainActivity mainActivity;
     public LogEntries entries;
+    public boolean flashFirstItemOnBind = false;
 
     // Provide a suitable constructor (depends on the kind of dataset)
     public LogEntriesAdapter(MainActivity mainActivity) {
@@ -62,6 +64,10 @@ public class LogEntriesAdapter extends RecyclerView.Adapter<LogEntriesAdapter.Vi
             holder.logEntryFragment.logEntry = entry;
             holder.logEntryFragment.crewMember = mainActivity.model.getCrewMember(entry.getEmployeeID());
             holder.logEntryFragment.populateContent();
+            if(position == 0 && flashFirstItemOnBind){
+                holder.logEntryFragment.flash();
+                flashFirstItemOnBind = false;
+            }
 
             Log.i("LEAdapter","Binding view holder at pos " + position + " for " + holder.logEntryFragment.crewMember.getFullName());
         }

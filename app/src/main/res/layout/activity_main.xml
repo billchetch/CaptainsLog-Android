@@ -140,63 +140,74 @@
             app:layout_constraintStart_toEndOf="@+id/lblGPS"
             app:layout_constraintTop_toBottomOf="@+id/headingLayout" />
 
-        <ImageView
-            android:id="@+id/progressOnDutyBar"
-            android:layout_width="100dp"
-            android:layout_height="40dp"
-            android:background="@color/age5"
-            android:visibility="invisible"
-            app:layout_constraintStart_toStartOf="@+id/progressOnDutyBorder"
-            app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
-
-        <ImageView
-            android:id="@+id/progressOnDutyBorder"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/progressContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
             android:layout_marginStart="4dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/profilePicCrewOnDuty"
-            app:srcCompat="@drawable/rect_border_only_lightgrey" />
+            app:layout_constraintTop_toBottomOf="@+id/profilePicCrewOnDuty">
 
-        <TextView
-            android:id="@+id/progressOnDutyInfo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="6dp"
-            android:text="3h 24m / 79%"
-            android:textAlignment="center"
-            android:textColor="@color/lightGrey"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:visibility="invisible"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/progressOnDutyBorder" />
+            <ImageView
+                android:id="@+id/progressOnDutyBar"
+                android:layout_width="200dp"
+                android:layout_height="36dp"
+                android:layout_marginTop="2dp"
+                android:background="@color/age5"
+                android:visibility="visible"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/progressOnDutyInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="hours / mins / %"
+                android:textAlignment="center"
+                android:textColor="@color/lightGrey"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/progressOnDutyBorder"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:visibility="visible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/rect_border_only_lightgrey" />
+        </android.support.constraint.ConstraintLayout>
 
         <Button
             android:id="@+id/btnAddLogEntry"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:onClick="openLogEntry"
             android:paddingLeft="64dp"
             android:paddingRight="64dp"
             android:text="@string/button.change"
             android:textSize="24sp"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/progressOnDutyInfo" />
+            app:layout_constraintTop_toBottomOf="@+id/progressContainer" />
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/logRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btnAddLogEntry"
             tools:layout_editor_absoluteX="16dp" />

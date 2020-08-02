@@ -1,8 +1,6 @@
 package net.chetch.captainslog;
 
 import android.content.DialogInterface;
-import android.content.res.Resources;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -12,12 +10,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import net.chetch.appframework.GenericActivity;
-import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.utilities.Utils;
-import net.chetch.webservices.employees.Employee;
+import net.chetch.utilities.Animation;
 
 //NOTE: this class is a bit strange as it was originally for a fragment and then adapted
 //for use with RecyclerView.Adapter class LogEntriesAdapter, specifically so as to work with the ViewHolder class
@@ -135,5 +131,10 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
 
+    }
+
+    public void flash(){
+        int colour = contentView.getResources().getColor(R.color.bluegreen);
+        Animation.flashBackground(contentView, colour, 3500, 0);
     }
 }

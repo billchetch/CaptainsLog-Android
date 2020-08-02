@@ -1,30 +1,17 @@
 package net.chetch.captainslog;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.MainThread;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
+import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -32,38 +19,17 @@ import net.chetch.appframework.ErrorDialogFragment;
 import net.chetch.appframework.GenericActivity;
 import net.chetch.appframework.GenericDialogFragment;
 import net.chetch.appframework.IDialogManager;
-import net.chetch.captainslog.data.CaptainsLogRepository;
-import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.CrewMember;
-import net.chetch.captainslog.data.CrewRepository;
-import net.chetch.captainslog.data.CrewStats;
 import net.chetch.captainslog.data.LogEntries;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.captainslog.models.MainViewModel;
 import net.chetch.utilities.Logger;
 import net.chetch.utilities.Utils;
-import net.chetch.webservices.DataObjectCollection;
 import net.chetch.webservices.Webservice;
-import net.chetch.webservices.WebserviceRepository;
 import net.chetch.webservices.WebserviceViewModel;
-import net.chetch.webservices.employees.Employee;
-import net.chetch.webservices.employees.Employees;
 import net.chetch.webservices.exceptions.WebserviceException;
 import net.chetch.webservices.gps.GPSPosition;
-import net.chetch.webservices.network.NetworkRepository;
-import net.chetch.webservices.network.Service;
-import net.chetch.webservices.network.Services;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static android.view.View.GONE;
 
 public class MainActivity extends GenericActivity implements IDialogManager{
     static public int pollServerTime = 10; //in seconds
@@ -73,9 +39,11 @@ public class MainActivity extends GenericActivity implements IDialogManager{
     ExcessOnDutyDialogFragment excessOnDutyDialog = null;
     LogEntriesAdapter logEntriesAdapter;
 
+    LogEntry topmostLogEntry = null;
     GPSPosition latestGPS = null;
     boolean initialLoad = true;
     boolean openXSDutyAfterLoad = false;
+    boolean raisedXSDutyWarning = false;
 
     Observer dataLoadProgress  = obj -> {
         WebserviceViewModel.LoadProgress progress = (WebserviceViewModel.LoadProgress)obj;
@@ -130,10 +98,17 @@ public class MainActivity extends GenericActivity implements IDialogManager{
 
         //entries
         model.getEntriesFirstPage().observe(this, entries->{
+            LogEntry le = entries.size() > 0 ? entries.get(0) : null;
+            if(topmostLogEntry != null && le != null && topmostLogEntry.getID() != le.getID()){
+                logEntriesAdapter.flashFirstItemOnBind = true;
+            } else {
+                logEntriesAdapter.flashFirstItemOnBind = false;
+            }
 
             logEntriesAdapter.setDataset(entries);
             Log.i("Main","First page of entries displayed " + entries.size() + " entries");
 
+            topmostLogEntry = le;
             hideProgress();
         });
 
@@ -193,19 +168,25 @@ public class MainActivity extends GenericActivity implements IDialogManager{
 
         stopTimer();
 
-        Calendar cal = model.getXSOnDutyWarning().getValue();
-        if(cal != null){
-            if(cal.getTimeInMillis() <= Calendar.getInstance().getTimeInMillis() + 1000){
-                cal = Calendar.getInstance();
-                cal.setTimeInMillis(cal.getTimeInMillis() + 15000);
+        Calendar cal = null;
+        if(raisedXSDutyWarning) {
+            cal = Calendar.getInstance();
+            cal.setTimeInMillis(cal.getTimeInMillis() + 10000);
+            Logger.warning("Crew has not handled XS duty warning");
+        } else {
+            cal = model.getXSOnDutyWarning().getValue();
+            if(cal != null && cal.getTimeInMillis() <= Calendar.getInstance().getTimeInMillis()){
+                cal.setTimeInMillis(cal.getTimeInMillis() + 10000);
             }
+        }
 
+        if(cal != null){
             setWakeUp(cal);
-            Logger.info("Setting wake up for " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT));
         } else {
             cancelWakeUp();
         }
-        Log.i("Main", "onStop: " + (cal == null ? " no wakeup to set " : Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT)));
+
+        Log.i("Main", "onStop: " + (cal == null ? " no wakeup to set " : "Wakeup set for " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT)));
     }
 
     @Override
@@ -216,6 +197,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
 
         if(model.isServicesConfigured()) {
             model.getLatestGPSPosition();
+            updateOnDuty(true);
         }
     }
 
@@ -261,17 +243,31 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         CrewMember crewMemberOnDuty = model.getCrewMemberOnDuty().getValue();
         if(crewMemberOnDuty == null)return;
 
-        ImageView progressBar = findViewById(R.id.progressOnDutyBar);
-        TextView progressInfo = findViewById(R.id.progressOnDutyInfo);
+        View progressCtn = findViewById(R.id.progressContainer);
         if(!show){
-            progressInfo.setVisibility(View.INVISIBLE);
-            progressBar.setVisibility(View.INVISIBLE);
+            progressCtn.setVisibility(View.GONE);
             return;
         }
 
+        ImageView progressBar = findViewById(R.id.progressOnDutyBar);
+        TextView progressInfo = findViewById(R.id.progressOnDutyInfo);
         GPSPosition pos = model.getGPSPosition().getValue();
         switch(crewMemberOnDuty.getLastState()){
             case MOVING:
+
+                if(progressCtn.getVisibility() == View.GONE) {
+                    progressCtn.setVisibility(View.VISIBLE);
+                    progressBar.setVisibility(View.INVISIBLE);
+
+                    Log.i("Main", "Post delay for updateOnDuty to allow view to draw");
+                    Handler handler = new Handler();
+                    handler.postDelayed(() -> {
+                        updateOnDuty(show);
+                    }, 100);
+                    return;
+                }
+
+
                 //do some calculations
                 long hours  = crewMemberOnDuty.getOnDutyHours();
                 long minutes = crewMemberOnDuty.getOnDutyMinutes();
@@ -281,12 +277,12 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                 String s = (hours > 0 ? hours + "h " : "") + minutes + "m";
                 s += " / " + percentage + "%";
                 progressInfo.setText(s);
-                progressInfo.setVisibility(View.VISIBLE);
 
                 //progress bar width
                 ImageView progressBorder = findViewById(R.id.progressOnDutyBorder);
                 int borderWidth = progressBorder.getWidth();
                 progressBar.getLayoutParams().width = (int)(borderWidth*Math.min(dutyCompletion, 1.0));
+                progressBar.setVisibility(View.VISIBLE);
 
                 //progress bar color
                 try {
@@ -295,8 +291,6 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                     Log.e("Main", e.getMessage() + " for color " + age);
                 }
 
-                progressBar.setVisibility(View.VISIBLE);
-                progressBar.requestLayout();
 
                 //bearing + speed
                 if(pos != null && pos.getBearing() != null){
@@ -308,14 +302,11 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                     tvHeading.setText(heading);
                     findViewById(R.id.headingLayout).setVisibility(View.VISIBLE);
                 }
-
                 break;
 
             case IDLE:
-                progressBar.setVisibility(View.INVISIBLE);
-                int resource = getResourceID("log_entry.state." + crewMemberOnDuty.getLastState(), "string");
-                progressInfo.setText(getString(resource));
-                progressInfo.setVisibility(View.VISIBLE);
+                raisedXSDutyWarning = false; //so it doesn't set an alarm
+                progressCtn.setVisibility(View.GONE);
                 findViewById(R.id.headingLayout).setVisibility(View.GONE);
                 break;
         }
@@ -348,6 +339,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         }
         excessOnDutyDialog = new ExcessOnDutyDialogFragment();
         excessOnDutyDialog.show(getSupportFragmentManager(), "ExcessOnDutyDialog");
+        raisedXSDutyWarning = true; //this will only get set back to false if the crew member responds positively to the dialog
 
         //play a notification sound
         try {
@@ -364,8 +356,9 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         if(dialog instanceof LogEntryConfirmationDialogFragment){
             LogEntry logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
             logEntryDialog.dismiss();
-
             try {
+                RecyclerView logEntriesRecyclerView = findViewById(R.id.logRecyclerView);
+                logEntriesRecyclerView.smoothScrollToPosition(0);
                 model.saveLogEntry(logEntry, dataLoadProgress);
                 showProgress();
             } catch (Exception e){
@@ -376,18 +369,32 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         } else if(dialog instanceof ExcessOnDutyDialogFragment){
             String reason = ((ExcessOnDutyDialogFragment)dialog).reason;
             try {
+                RecyclerView logEntriesRecyclerView = findViewById(R.id.logRecyclerView);
+                logEntriesRecyclerView.smoothScrollToPosition(0);
                 model.addXSDutyReason(reason, dataLoadProgress);
                 showProgress();
+                raisedXSDutyWarning = false; //means that the current duty warning was processed
+
                 Log.i("Main", "Saving xs on duty reason");
             } catch (Exception e){
                 showError(e);
             }
         } else if(dialog instanceof ErrorDialogFragment){
             Throwable t = ((ErrorDialogFragment)dialog).throwable;
-            if(t instanceof WebserviceException && !((WebserviceException)t).isServiceAvailable()){
-                model.loadData(dataLoadProgress);
-                showProgress();
+            if(t instanceof WebserviceException){
+                WebserviceException wsex = (WebserviceException)t;
+                if(!wsex.isServiceAvailable()) {
+                    model.loadData(dataLoadProgress);
+                    showProgress();
+                }
+                String s = wsex.getMessage();
+                if(wsex.getThrowable() != null){
+                    s += " ... " + wsex.getThrowable().getClass().getCanonicalName() + ": " + wsex.getThrowable().getMessage();
+                }
+                Logger.exception(s);
+                Log.e("Main", s);
             }
+
             Log.i("Main", "Error dialog onDialogPositiveClick");
         }
     }
