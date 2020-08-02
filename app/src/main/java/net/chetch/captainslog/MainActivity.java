@@ -76,7 +76,6 @@ public class MainActivity extends GenericActivity implements IDialogManager{
     GPSPosition latestGPS = null;
     boolean initialLoad = true;
     boolean openXSDutyAfterLoad = false;
-    boolean activityPaused = false;
 
     Observer dataLoadProgress  = obj -> {
         WebserviceViewModel.LoadProgress progress = (WebserviceViewModel.LoadProgress)obj;
@@ -89,7 +88,6 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         if(initialLoad && progress.dataLoaded instanceof LogEntries){
             initialLoad = false;
 
-            startTimer(pollServerTime);
             updateOnDuty(true);
             Log.i("Main", "Finished initial load");
 
@@ -130,25 +128,6 @@ public class MainActivity extends GenericActivity implements IDialogManager{
             Log.e("Main", "Error: " + t.getMessage());
         });
 
-        //load data
-        Intent intent = getIntent();
-        if(intent != null && intent.getBooleanExtra("wakeup", false)){
-            openXSDutyAfterLoad = true;
-            Log.i("Main", "onCreate called from wakeup...");
-        } else {
-            openXSDutyAfterLoad = false;
-        }
-
-        findViewById(R.id.headingLayout).setVisibility(View.GONE);
-
-        showProgress();
-        model.loadData(dataLoadProgress);
-
-        //gps updates
-        model.getGPSPosition().observe(this, pos->{
-            updateOnDuty(true);
-        });
-
         //entries
         model.getEntriesFirstPage().observe(this, entries->{
 
@@ -180,36 +159,71 @@ public class MainActivity extends GenericActivity implements IDialogManager{
             Log.i("Main", "Set on duty warning " + s);
         });
 
+
+        //load data
+        Intent intent = getIntent();
+        if(intent != null && intent.getBooleanExtra("wakeup", false)){
+            openXSDutyAfterLoad = true;
+        } else {
+            openXSDutyAfterLoad = false;
+        }
+
+        findViewById(R.id.headingLayout).setVisibility(View.GONE);
+        showProgress();
+        model.loadData(dataLoadProgress);
+
+        //gps updates
+        model.getGPSPosition().observe(this, pos->{
+            updateOnDuty(true);
+        });
+
         Log.i("Main", "onCreate... on duty limit set to " + CrewMember.onDutyLimit + " secs");
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        activityPaused = true;
-        /*Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(cal.getTimeInMillis() + 10000);*/
-        Calendar cal = model.getXSOnDutyWarning().getValue();
-        setWakeUp(cal);
-        if(cal != null){
-            Logger.info("Setting wake up for " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT));
-        }
-        Log.i("Main", "onPause: " + (cal == null ? " no wakeup to set " : Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT)));
+    protected void onStart() {
+        super.onStart();
+
+        startTimer(pollServerTime);
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        activityPaused = false;
+    protected void onStop() {
+        super.onStop();
+
+        stopTimer();
+
+        Calendar cal = model.getXSOnDutyWarning().getValue();
+        if(cal != null){
+            if(cal.getTimeInMillis() <= Calendar.getInstance().getTimeInMillis() + 1000){
+                cal = Calendar.getInstance();
+                cal.setTimeInMillis(cal.getTimeInMillis() + 15000);
+            }
+
+            setWakeUp(cal);
+            Logger.info("Setting wake up for " + Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT));
+        } else {
+            cancelWakeUp();
+        }
+        Log.i("Main", "onStop: " + (cal == null ? " no wakeup to set " : Utils.formatDate(cal, Webservice.DEFAULT_DATE_FORMAT)));
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
         cancelWakeUp();
-        Log.i("Main", "onResume: cancel wakeup");
+
+        if(model.isServicesConfigured()) {
+            model.getLatestGPSPosition();
+        }
     }
 
     @Override
     protected int onTimer(){
 
         CrewMember crewMemberOnDuty = model.getCrewMemberOnDuty().getValue();
-        if(crewMemberOnDuty != null && !activityPaused) {
+        if(crewMemberOnDuty != null) {
             Calendar xsOnDutyWarning = model.getXSOnDutyWarning().getValue();
             boolean requiresWarning =  xsOnDutyWarning != null && xsOnDutyWarning.getTimeInMillis() < Calendar.getInstance().getTimeInMillis();
 
@@ -218,7 +232,9 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                 Log.i("Main", "Now: " + Utils.formatDate(Calendar.getInstance(), Webservice.DEFAULT_DATE_FORMAT) + ", Warning set for: " + Utils.formatDate(xsOnDutyWarning, Webservice.DEFAULT_DATE_FORMAT));
             }
         }
-        model.getLatestGPSPosition();
+        if(model.isServicesConfigured()) {
+            model.getLatestGPSPosition();
+        }
         updateOnDuty(true);
 
         return super.onTimer();
