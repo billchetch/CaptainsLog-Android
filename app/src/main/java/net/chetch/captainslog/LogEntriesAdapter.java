@@ -1,14 +1,11 @@
 package net.chetch.captainslog;
 
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.widget.TextView;
 
-import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.LogEntries;
 import net.chetch.captainslog.data.LogEntry;
 

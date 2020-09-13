@@ -1,22 +1,20 @@
 package net.chetch.captainslog.models;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Observer;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import android.util.Log;
 
 import net.chetch.captainslog.data.CaptainsLogRepository;
 import net.chetch.captainslog.data.Crew;
 import net.chetch.captainslog.data.CrewMember;
 import net.chetch.captainslog.data.CrewRepository;
-import net.chetch.captainslog.data.CrewStats;
 import net.chetch.captainslog.data.LogEntries;
 import net.chetch.captainslog.data.LogEntry;
 import net.chetch.webservices.DataStore;
 import net.chetch.webservices.WebserviceViewModel;
 import net.chetch.webservices.gps.GPSPosition;
 import net.chetch.webservices.gps.GPSRepository;
-import net.chetch.webservices.network.Services;
 
 import java.util.Calendar;
 

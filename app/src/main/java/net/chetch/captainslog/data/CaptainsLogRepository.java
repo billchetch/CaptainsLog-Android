@@ -1,14 +1,12 @@
 package net.chetch.captainslog.data;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.util.Log;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import net.chetch.webservices.AboutService;
 import net.chetch.webservices.DataCache;
 import net.chetch.webservices.DataStore;
 import net.chetch.webservices.WebserviceRepository;
-import net.chetch.webservices.employees.Employees;
 
 public class CaptainsLogRepository extends WebserviceRepository<ICaptainsLogService> {
     static public int ENTRIES_PAGE_SIZE = 50;
