@@ -267,7 +267,6 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                     return;
                 }
 
-
                 //do some calculations
                 long hours  = crewMemberOnDuty.getOnDutyHours();
                 long minutes = crewMemberOnDuty.getOnDutyMinutes();
