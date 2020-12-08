@@ -32,7 +32,7 @@
     <string name="log_entry.state.IDLE">berhenti</string>
 
     <string name="button.log_entry.event.RAISE_ANCHOR">Naikin jangkar</string>
-    <string name="button.log_entry.event.SET_ANCHOR">Pasang anchor</string>
+    <string name="button.log_entry.event.SET_ANCHOR">Pasang jangkar</string>
     <string name="button.log_entry.event.DUTY_CHANGE">Ganti pertugas</string>
     <string name="button.log_entry.event.COMMENT">Kasih keterangan</string>
     <string name="button.log_entry.event.ALERT">Alert</string>

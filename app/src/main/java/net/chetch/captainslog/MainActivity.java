@@ -239,6 +239,11 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         findViewById(R.id.mainLayout).setAlpha(1.0f);
     }
 
+    @Override
+    public void openSettings() {
+        super.openSettings();
+    }
+
     public void updateOnDuty(boolean show){
         CrewMember crewMemberOnDuty = model.getCrewMemberOnDuty().getValue();
         if(crewMemberOnDuty == null)return;
