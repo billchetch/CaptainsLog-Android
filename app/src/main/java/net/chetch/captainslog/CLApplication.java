@@ -41,13 +41,13 @@ public class CLApplication extends ChetchApplication {
         }
 
         //add a network change listener to handle network state changes
-        IntentFilter intentFilter = new IntentFilter();
+        /*IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Logger.warning("Wifi network state change");
             }
-        }, intentFilter);
+        }, intentFilter);*/
     }
 }

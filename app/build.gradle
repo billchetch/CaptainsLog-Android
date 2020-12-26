@@ -39,5 +39,6 @@ dependencies {
     implementation project(':appresources')
     implementation project(':webservices')
 
+
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
 }
