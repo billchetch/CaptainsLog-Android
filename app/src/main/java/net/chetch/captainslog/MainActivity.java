@@ -145,7 +145,11 @@ public class MainActivity extends GenericActivity implements IDialogManager{
 
         findViewById(R.id.headingLayout).setVisibility(View.GONE);
         showProgress();
-        model.loadData(dataLoadProgress);
+        try {
+            model.loadData(dataLoadProgress);
+        } catch (Exception e){
+            showError(e);
+        }
 
         //gps updates
         model.getGPSPosition().observe(this, pos->{

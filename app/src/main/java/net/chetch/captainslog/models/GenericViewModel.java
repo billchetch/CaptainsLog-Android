@@ -58,24 +58,29 @@ public class GenericViewModel extends WebserviceViewModel {
 
     @Override
     public DataStore loadData(Observer observer){
-        DataStore<?> dataStore = super.loadData(observer);
-        dataStore.observe(data ->{
-            notifyLoading(observer, "Crew");
-            crewRepository.getCrew().add(liveDataCrew).observe(crew->{
-                notifyLoading(observer, "Profile pics", crew);
-                crewRepository.getProfilePics(crew).observe( bms ->{
-                    notifyLoading(observer, "GPS", bms);
-                    //get latest gps position
-                    gpsRepository.getLatestPosition().add(liveDataGPSPosition).observe(gps->{
-                        notifyLoaded(observer, gps);
+        try {
+            DataStore<?> dataStore = super.loadData(observer);
+            dataStore.observe(data -> {
+                notifyLoading(observer, "Crew");
+                crewRepository.getCrew().add(liveDataCrew).observe(crew -> {
+                    notifyLoading(observer, "Profile pics", crew);
+                    crewRepository.getProfilePics(crew).observe(bms -> {
+                        notifyLoading(observer, "GPS", bms);
+                        //get latest gps position
+                        gpsRepository.getLatestPosition().add(liveDataGPSPosition).observe(gps -> {
+                            notifyLoaded(observer, gps);
 
-                        //get log entries
-                        loadEntries(observer);
+                            //get log entries
+                            loadEntries(observer);
+                        });
                     });
-                });
-            }); //end getting the crew
-        }); //end generic data load (service config)
-        return dataStore;
+                }); //end getting the crew
+            }); //end generic data load (service config)
+            return dataStore;
+        } catch (Exception e){
+            Log.e("GVM", e.getMessage());
+            return null;
+        }
     }
 
 
