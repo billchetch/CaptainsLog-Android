@@ -60,6 +60,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
             Log.i("Main", "Finished initial load");
 
             if(openXSDutyAfterLoad && (excessOnDutyDialog == null || !excessOnDutyDialog.isShowing())){
+                openXSDutyAfterLoad = false;
                 openExcessOnDuty();
                 Log.i("Main", "Open XS on duty dialog after load");
             }
@@ -313,7 +314,6 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                 break;
 
             case IDLE:
-                raisedXSDutyWarning = false; //so it doesn't set an alarm
                 progressCtn.setVisibility(View.GONE);
                 findViewById(R.id.headingLayout).setVisibility(View.GONE);
                 break;
@@ -329,6 +329,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
     }
 
     public void openLogEntry(View view){
+
         if(logEntryDialog != null){
             logEntryDialog.dismiss();
         }
@@ -340,6 +341,10 @@ public class MainActivity extends GenericActivity implements IDialogManager{
     }
 
     public void openExcessOnDuty(){
+        if(logEntryDialog != null && logEntryDialog.isShowing()){
+            return;
+        }
+
         Logger.warning("Excess duty dialog opened");
 
         if(excessOnDutyDialog != null){
@@ -364,6 +369,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         if(dialog instanceof LogEntryConfirmationDialogFragment){
             LogEntry logEntry = ((LogEntryConfirmationDialogFragment)dialog).logEntry;
             logEntryDialog.dismiss();
+            raisedXSDutyWarning = false;
             try {
                 RecyclerView logEntriesRecyclerView = findViewById(R.id.logRecyclerView);
                 logEntriesRecyclerView.smoothScrollToPosition(0);

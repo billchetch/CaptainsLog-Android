@@ -4,8 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    style="@style/AppFramework.Dark.NoActionBar.Dialog.Layout.Error"
-    android:theme="@style/AppFramework.Dark.NoActionBar.Dialog.Error"
+    style="@style/AppFramework.Dark.NoActionBar.Dialog.Layout.Warning"
+    android:theme="@style/AppFramework.Dark.NoActionBar.Dialog.Warning"
     android:padding="32dp">
 
     <LinearLayout
