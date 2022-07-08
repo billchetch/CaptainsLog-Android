@@ -28,14 +28,14 @@ public class CrewMember extends Employee {
     public int getOnDutyHours(){
         Calendar now = Calendar.getInstance();
         int hours = (int)Utils.hoursDiff(now, stats.getStartedDuty());
-        return hours;
+        return Math.max(0, hours);
     }
 
     public int getOnDutyMinutes(){
         Calendar now = Calendar.getInstance();
         int hours = getOnDutyHours();
         int minutes = (int)Utils.dateDiff(now, stats.getStartedDuty(), TimeUnit.MINUTES) - 60*hours;
-        return minutes;
+        return Math.max(0, minutes);
     }
 
     public boolean isOnDuty(){

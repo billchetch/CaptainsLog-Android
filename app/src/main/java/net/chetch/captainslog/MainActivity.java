@@ -3,6 +3,7 @@ package net.chetch.captainslog;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -29,6 +30,8 @@ import net.chetch.webservices.Webservice;
 import net.chetch.webservices.WebserviceViewModel;
 import net.chetch.webservices.exceptions.WebserviceException;
 import net.chetch.webservices.gps.GPSPosition;
+import net.chetch.webservices.gps.GPSRepository;
+
 import java.util.Calendar;
 
 public class MainActivity extends GenericActivity implements IDialogManager{
@@ -44,6 +47,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
     boolean initialLoad = true;
     boolean openXSDutyAfterLoad = false;
     boolean raisedXSDutyWarning = false;
+    boolean gpsError = false;
 
     Observer dataLoadProgress  = obj -> {
         WebserviceViewModel.LoadProgress progress = (WebserviceViewModel.LoadProgress)obj;
@@ -93,9 +97,21 @@ public class MainActivity extends GenericActivity implements IDialogManager{
 
         //observe errors
         model.getError().observe(this, t ->{
-            showError(t);
-            Log.e("Main", "Error: " + t.getMessage());
+            if(t instanceof WebserviceException){
+                WebserviceException wsx = (WebserviceException)t;
+                if(wsx.getTag() instanceof GPSRepository){
+                    gpsError = true;
+                    Log.e("Main", "GPS Error: " + t.getMessage());
+                } else {
+                    showError(t);
+                    Log.e("Main", "Webservice Exception Error: " + t.getMessage());
+                }
+            } else {
+                showError(t);
+                Log.e("Main", "Non Webservice Exception Error: " + t.getMessage());
+            }
         });
+
 
         //entries
         model.getEntriesFirstPage().observe(this, entries->{
@@ -201,6 +217,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         cancelWakeUp();
 
         if(model.isServicesConfigured()) {
+            gpsError = false;
             model.getLatestGPSPosition();
             updateOnDuty(true);
         }
@@ -220,6 +237,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
             }
         }
         if(model.isServicesConfigured()) {
+            gpsError = false;
             model.getLatestGPSPosition();
         }
         updateOnDuty(true);
@@ -227,6 +245,9 @@ public class MainActivity extends GenericActivity implements IDialogManager{
         return super.onTimer();
     }
 
+    private void onLatestGPSPosition(){
+
+    }
 
     @Override
     public void showProgress() {
@@ -303,10 +324,10 @@ public class MainActivity extends GenericActivity implements IDialogManager{
 
                 //bearing + speed
                 if(pos != null && pos.getBearing() != null){
+                    TextView tvHeading = findViewById(R.id.heading);
                     ImageView dir = findViewById(R.id.direction);
                     dir.setRotation(pos.getBearing().floatValue());
 
-                    TextView tvHeading = findViewById(R.id.heading);
                     String heading = pos.getBearing().intValue() +  getString(R.string.symbol_degree) +  " @ " + String.format("%.1f", pos.getSpeed(GPSPosition.SpeedUnits.NPH)) + "kts";
                     tvHeading.setText(heading);
                     findViewById(R.id.headingLayout).setVisibility(View.VISIBLE);
@@ -325,6 +346,11 @@ public class MainActivity extends GenericActivity implements IDialogManager{
             String lat = String.format("%.5f", pos.getLatitude());
             String lon = String.format("%.5f", pos.getLongitude());
             gpstv.setText(lat + "/" + lon);
+
+            TextView tvHeading = findViewById(R.id.heading);
+            int color = getResources().getColor(gpsError ? R.color.errorRed : R.color.white);
+            tvHeading.setTextColor(color);
+            gpstv.setTextColor(color);
         }
     }
 
