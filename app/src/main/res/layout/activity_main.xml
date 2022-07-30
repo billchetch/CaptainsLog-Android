@@ -95,8 +95,8 @@
                 android:text="@string/label.field.heading"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                app:layout_constraintStart_toEndOf="@+id/profilePicCrewOnDuty"
-                app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
                 android:id="@+id/direction"
@@ -104,6 +104,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 app:layout_constraintStart_toEndOf="@+id/lblHeading"
+                app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_round_navigation_24px" />
 
             <TextView
@@ -115,7 +116,7 @@
                 android:textSize="16sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/lblHeading"
-                app:layout_constraintTop_toBottomOf="@+id/crewOnDutyKnownAs" />
+                app:layout_constraintTop_toTopOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
@@ -162,6 +163,16 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <ImageView
+                android:id="@+id/progressOnDutyBorder"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:visibility="visible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/rect_border_only_lightgrey" />
+
             <TextView
                 android:id="@+id/progressOnDutyInfo"
                 android:layout_width="wrap_content"
@@ -176,16 +187,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <ImageView
-                android:id="@+id/progressOnDutyBorder"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:visibility="visible"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/rect_border_only_lightgrey" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <Button
