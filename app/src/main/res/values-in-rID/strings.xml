@@ -16,7 +16,6 @@
     <string name="label.field.date">Tgl:</string>
     <string name="label.field.status">Status:</string>
     <string name="label.field.heading">Arah:</string>
-    <string name="label.field.latLon">Lat/Lon:</string>
     <string name="label.excess_duty.CREW_ASLEEP">Tidak bisa banugnin kru (karna tidur)</string>
     <string name="label.excess_duty.CREW_SICK">Tidak bisa banugnin kru (karna sakit)</string>
     <string name="label.excess_duty.NEAR_DESTINATION">Hampir sampai tujuan</string>

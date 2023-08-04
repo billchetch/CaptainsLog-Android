@@ -43,7 +43,8 @@ public class MainActivity extends GenericActivity implements IDialogManager{
     LogEntriesAdapter logEntriesAdapter;
 
     LogEntry topmostLogEntry = null;
-    GPSPosition latestGPS = null;
+    GPSPosition lastGPSPosition = null;
+    Calendar lastGPSPositionUpdated = null;
     boolean initialLoad = true;
     boolean openXSDutyAfterLoad = false;
     boolean raisedXSDutyWarning = false;
@@ -170,6 +171,8 @@ public class MainActivity extends GenericActivity implements IDialogManager{
 
         //gps updates
         model.getGPSPosition().observe(this, pos->{
+            lastGPSPosition = pos;
+            lastGPSPositionUpdated = Calendar.getInstance();
             updateOnDuty(true);
         });
 
@@ -436,6 +439,23 @@ public class MainActivity extends GenericActivity implements IDialogManager{
             }
 
             Log.i("Main", "Error dialog onDialogPositiveClick");
+        }
+    }
+
+    @Override
+    public void openAbout(){
+        super.openAbout();
+        try {
+            String lf = "\n";
+            CLApplication app = (CLApplication) getApplication();
+            String s = "";
+            s += "App uptime: " + Utils.formatDuration(app.getUpTime(), Utils.DurationFormat.DAYS_HOURS_MINS_SECS) + lf;
+            s += "GPS position: " + lastGPSPosition.getLatitude() + "," + lastGPSPosition.getLongitude() + lf;
+            s += "GPS updated on: " + Utils.formatDate(lastGPSPositionUpdated, Webservice.DEFAULT_DATE_FORMAT) + lf;
+            aboutDialog.aboutBlurb = s;
+
+        } catch (Exception e) {
+
         }
     }
 }

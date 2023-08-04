@@ -15,11 +15,16 @@ import net.chetch.captainslog.data.CrewMember;
 import net.chetch.utilities.Logger;
 import net.chetch.webservices.network.NetworkRepository;
 
+import java.util.Calendar;
+
 public class CLApplication extends ChetchApplication {
+
+    private Calendar appStarted;
 
     @Override
     public void onCreate() {
         LOG_FILE = "cllog";
+        appStarted = Calendar.getInstance();
 
         super.onCreate();
 
@@ -28,7 +33,7 @@ public class CLApplication extends ChetchApplication {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         try{
             String apiBaseURL = sharedPref.getString("api_base_url", null);
-            //String apiBaseURL = "http://192.168.1.106:8001/api/";
+            //String apiBaseURL = "http://192.168.1.103:8001/api/";
             NetworkRepository.getInstance().setAPIBaseURL(apiBaseURL);
 
             String dutyLimit = sharedPref.getString("on_duty_limit", "240");
@@ -50,5 +55,9 @@ public class CLApplication extends ChetchApplication {
                 Logger.warning("Wifi network state change");
             }
         }, intentFilter);*/
+    }
+
+    public long getUpTime(){
+        return Calendar.getInstance().getTimeInMillis() - appStarted.getTimeInMillis();
     }
 }
