@@ -331,7 +331,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
                     ImageView dir = findViewById(R.id.direction);
                     dir.setRotation(pos.getBearing().floatValue());
 
-                    String heading = pos.getBearing().intValue() +  getString(R.string.symbol_degree) +  " @ " + String.format("%.1f", pos.getSpeed(GPSPosition.SpeedUnits.NPH)) + "kts";
+                    String heading = pos.getBearing().intValue() +  getString(net.chetch.appresources.R.string.symbol_degree) +  " @ " + String.format("%.1f", pos.getSpeed(GPSPosition.SpeedUnits.NPH)) + "kts";
                     tvHeading.setText(heading);
                     findViewById(R.id.headingLayout).setVisibility(View.VISIBLE);
                 }
@@ -351,7 +351,7 @@ public class MainActivity extends GenericActivity implements IDialogManager{
             gpstv.setText(lat + "/" + lon);
 
             TextView tvHeading = findViewById(R.id.heading);
-            int color = getResources().getColor(gpsError ? R.color.errorRed : R.color.white);
+            int color = getResources().getColor(gpsError ? net.chetch.appresources.R.color.errorRed : net.chetch.appresources.R.color.white);
             tvHeading.setTextColor(color);
             gpstv.setTextColor(color);
         }

@@ -134,7 +134,7 @@ public class LogEntryFragment extends Fragment implements View.OnClickListener {
     }
 
     public void flash(){
-        int colour = contentView.getResources().getColor(R.color.bluegreen);
+        int colour = contentView.getResources().getColor(net.chetch.appresources.R.color.bluegreen);
         Animation.flashBackground(contentView, colour, 3500, 0);
     }
 }
