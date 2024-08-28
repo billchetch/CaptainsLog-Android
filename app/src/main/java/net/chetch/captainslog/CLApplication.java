@@ -33,7 +33,8 @@ public class CLApplication extends ChetchApplication {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         try{
             String apiBaseURL = sharedPref.getString("api_base_url", null);
-            //String apiBaseURL = "http://192.168.1.103:8001/api/";
+            //String apiBaseURL = "http://192.168.2.88:8001/api/";
+            //String apiBaseURL = "http://192.168.1.104:8001/api/";
             NetworkRepository.getInstance().setAPIBaseURL(apiBaseURL);
 
             String dutyLimit = sharedPref.getString("on_duty_limit", "240");
